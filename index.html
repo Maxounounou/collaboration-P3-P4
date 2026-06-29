@@ -2,153 +2,180 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Collaboration P3-P4</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaboration P3-P4</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<header class="hero">
-    <h1>👋 Collaboration P3 / P4</h1>
-    <p>Espace de travail partagé de l'équipe pédagogique</p>
-</header>
+<div class="layout">
 
-<main class="container">
+    <!-- 🧭 SIDEBAR -->
+    <nav class="sidebar">
+        <h2>🏫 P3 / P4</h2>
 
-    <!-- 🟣 TABLEAU DE BORD -->
-    <section class="dashboard">
+        <a href="#accueil">🏠 Accueil</a>
+        <a href="#competences">📚 Compétences</a>
+        <a href="#resultats">📊 Résultats</a>
+        <a href="#bulletins">📝 Bulletins</a>
+        <a href="#groupes">👥 Groupes</a>
+        <a href="#documents">📁 Documents</a>
+        <a href="#calendrier">📅 Calendrier</a>
+    </nav>
 
-        <div class="dash-card urgent">
-            <h3>⭐ Urgences</h3>
-            <p>Aucune urgence pour aujourd'hui</p>
-        </div>
+    <!-- 📄 CONTENU -->
+    <main class="content">
 
-        <div class="dash-card info">
-            <h3>📢 Infos</h3>
-            <p>Réunion mardi 16h</p>
-        </div>
+        <!-- 🏠 ACCUEIL / DASHBOARD -->
+        <section id="accueil">
 
-        <div class="dash-card calendar">
-            <h3>📅 Prochain événement</h3>
-            <p>Voir calendrier ci-dessous</p>
-        </div>
-    </section>
+            <h1>👋 Collaboration P3 / P4</h1>
 
-    <!-- 📚 COMPETENCES -->
-    <section>
-        <h2>📚 Compétences</h2>
+            <div class="dashboard">
 
-        <div class="grid-2">
+                <div class="dash-card urgent">
+                    <h3>⭐ Urgences</h3>
+                    <p>Aucune urgence pour aujourd'hui</p>
+                </div>
 
-            <a class="card" href="#">
-                📚 Compétences - P3 - Carine
-            </a>
+                <div class="dash-card info">
+                    <h3>📢 Informations importantes</h3>
+                    <ul>
+                        <li>Réunion mardi 16h</li>
+                        <li>Bulletins à rendre vendredi</li>
+                    </ul>
+                </div>
 
-            <a class="card" href="#">
-                📚 Compétences - P3 - Maxime
-            </a>
+                <div class="dash-card calendar">
+                    <h3>📅 Prochain événement</h3>
+                    <p>Voir calendrier ci-dessous</p>
+                </div>
 
-            <a class="card" href="#">
-                📚 Compétences - P4 - Vanessa
-            </a>
+            </div>
 
-            <a class="card" href="#">
-                📚 Compétences - P4 - Laetitia
-            </a>
+        </section>
 
-        </div>
-    </section>
+        <!-- 📚 COMPETENCES -->
+        <section id="competences">
+            <h2>📚 Compétences</h2>
 
-    <!-- 📊 RESULTATS -->
-    <section>
-        <h2>📊 Résultats</h2>
+            <div class="grid-2">
 
-        <div class="grid-2">
+                <a class="card" href="#">
+                    📚 Compétences - P3 - Carine
+                </a>
 
-            <a class="card" href="#">
-                📊 Résultats - P3 - Carine
-            </a>
+                <a class="card" href="#">
+                    📚 Compétences - P3 - Maxime
+                </a>
 
-            <a class="card" href="#">
-                📊 Résultats - P3 - Maxime
-            </a>
+                <a class="card" href="#">
+                    📚 Compétences - P4 - Vanessa
+                </a>
 
-            <a class="card" href="#">
-                📊 Résultats - P4 - Vanessa
-            </a>
+                <a class="card" href="#">
+                    📚 Compétences - P4 - Laetitia
+                </a>
 
-            <a class="card" href="#">
-                📊 Résultats - P4 - Laetitia
-            </a>
+            </div>
+        </section>
 
-        </div>
-    </section>
+        <!-- 📊 RESULTATS -->
+        <section id="resultats">
+            <h2>📊 Résultats</h2>
 
-    <!-- 📝 BULLETINS -->
-    <section>
-        <h2>📝 Bulletins</h2>
+            <div class="grid-2">
 
-        <div class="grid-2">
+                <a class="card" href="#">
+                    📊 Résultats - P3 - Carine
+                </a>
 
-            <a class="card" href="#">
-                📝 Bulletins - P3 - Carine
-            </a>
+                <a class="card" href="#">
+                    📊 Résultats - P3 - Maxime
+                </a>
 
-            <a class="card" href="#">
-                📝 Bulletins - P3 - Maxime
-            </a>
+                <a class="card" href="#">
+                    📊 Résultats - P4 - Vanessa
+                </a>
 
-            <a class="card" href="#">
-                📝 Bulletins - P4 - Vanessa
-            </a>
+                <a class="card" href="#">
+                    📊 Résultats - P4 - Laetitia
+                </a>
 
-            <a class="card" href="#">
-                📝 Bulletins - P4 - Laetitia
-            </a>
+            </div>
+        </section>
 
-        </div>
-    </section>
+        <!-- 📝 BULLETINS -->
+        <section id="bulletins">
+            <h2>📝 Bulletins</h2>
 
-    <!-- 📂 DOCUMENTS -->
-    <section>
-        <h2>📂 Documents</h2>
+            <div class="grid-2">
 
-        <div class="grid">
+                <a class="card" href="#">
+                    📝 Bulletins - P3 - Carine
+                </a>
 
-            <a class="card" href="https://drive.google.com/drive/folders/1oeyzHDuosKzSJb4nDD5C3-bxAVMLF3EM?usp=sharing" target="_blank">
-                📁 Mes documents (Drive)
-            </a>
+                <a class="card" href="#">
+                    📝 Bulletins - P3 - Maxime
+                </a>
+
+                <a class="card" href="#">
+                    📝 Bulletins - P4 - Vanessa
+                </a>
+
+                <a class="card" href="#">
+                    📝 Bulletins - P4 - Laetitia
+                </a>
+
+            </div>
+        </section>
+
+        <!-- 👥 GROUPES -->
+        <section id="groupes">
+            <h2>👥 Groupes</h2>
 
             <a class="card" href="#">
                 👥 Liste des groupes
             </a>
+        </section>
 
-        </div>
-    </section>
+        <!-- 📁 DOCUMENTS -->
+        <section id="documents">
+            <h2>📁 Documents</h2>
 
-    <!-- 📅 CALENDRIER -->
-    <section>
-        <h2>📅 Calendrier commun</h2>
+            <div class="grid">
 
-        <div class="calendar-box">
+                <a class="card" 
+                   href="https://drive.google.com/drive/folders/1oeyzHDuosKzSJb4nDD5C3-bxAVMLF3EM?usp=sharing"
+                   target="_blank">
+                    📁 Mes documents (Google Drive)
+                </a>
 
-            <iframe
-                src="https://calendar.google.com/calendar/embed?src=9f6cd656190088fd2983f102672de5f78d59ae91c014824b6db0cbed336673a0%40group.calendar.google.com&ctz=Europe%2FBrussels&mode=AGENDA"
-                width="100%"
-                height="650"
-                frameborder="0"
-                scrolling="no">
-            </iframe>
+            </div>
+        </section>
 
-        </div>
-    </section>
+        <!-- 📅 CALENDRIER -->
+        <section id="calendrier">
+            <h2>📅 Calendrier commun</h2>
 
-</main>
+            <div class="calendar-box">
 
-<footer>
-    <p>École primaire — Collaboration P3/P4</p>
-</footer>
+                <iframe
+                    src="https://calendar.google.com/calendar/embed?src=9f6cd656190088fd2983f102672de5f78d59ae91c014824b6db0cbed336673a0%40group.calendar.google.com&ctz=Europe%2FBrussels&mode=AGENDA"
+                    width="100%"
+                    height="650"
+                    frameborder="0"
+                    scrolling="no">
+                </iframe>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
 
 </body>
 </html>
