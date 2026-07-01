@@ -1,136 +1,199 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collaboration P3-P4</title>
+
+    <title>Collaboration P3 / P4</title>
 
     <link rel="stylesheet" href="css/style.css">
+
     <script src="js/app.js" defer></script>
+
 </head>
 
-<body>
+<body class="locked">
 
-<!-- 🔒 LOCK SCREEN -->
+<!-- ===================================================== -->
+<!-- ECRAN DE VERROUILLAGE -->
+<!-- ===================================================== -->
+
 <div id="lock-screen">
-    <div class="lock-box" id="lock-box">
+
+    <div class="lock-background"></div>
+
+    <div class="lock-card" id="lock-card">
 
         <div class="lock-icon">🔒</div>
 
-        <h2>Collaboration P3 / P4</h2>
-        <p>Espace collaboratif de l'équipe pédagogique</p>
+        <h1>Collaboration P3 / P4</h1>
 
-        <input type="password" id="pin" maxlength="6" placeholder="••••••"
-               onkeydown="if(event.key==='Enter'){checkPin()}">
+        <p class="lock-subtitle">
+            Espace collaboratif de l'équipe pédagogique
+        </p>
 
-        <button onclick="checkPin()">Accéder</button>
+        <input type="password" id="pin" maxlength="4" placeholder="••••" autocomplete="off">
 
-        <p id="error"></p>
+        <button id="unlock-btn">Accéder</button>
+
+        <p id="error-message"></p>
 
     </div>
+
 </div>
 
-<!-- 🌐 CONTENU PRINCIPAL -->
+<!-- ===================================================== -->
+<!-- CONTENU PRINCIPAL -->
+<!-- ===================================================== -->
+
+<div id="page">
+
 <header class="hero">
+
     <h1>👋 Collaboration P3 / P4</h1>
-    <p>Espace de travail partagé</p>
+
+    <p>Bienvenue sur votre espace collaboratif.</p>
+
 </header>
 
 <main class="container">
 
-    <section class="important">
-        <div class="alert">
-            📢 Bienvenue sur l’espace collaboratif P3 / P4
-        </div>
-    </section>
+<!-- DASHBOARD -->
+<section class="dashboard">
 
-    <section class="dashboard">
+    <div class="dash-card urgent">
+        <h3>⭐ Urgences</h3>
+        <p>Aucune urgence aujourd'hui.</p>
+    </div>
 
-        <div class="dash-card urgent">
-            <h3>⭐ Urgences</h3>
-            <p>Aucune urgence aujourd’hui</p>
-        </div>
+    <div class="dash-card info">
+        <h3>📢 Informations importantes</h3>
+        <p>Réunion mardi à 16h.</p>
+    </div>
 
-        <div class="dash-card info">
-            <h3>📢 Informations</h3>
-            <p>Réunion mardi 16h</p>
-        </div>
+    <div class="dash-card calendar">
+        <h3>📅 Prochain événement</h3>
+        <p>Consultez le calendrier ci-dessous.</p>
+    </div>
 
-        <div class="dash-card calendar">
-            <h3>📅 Calendrier</h3>
-            <p>Voir ci-dessous</p>
-        </div>
+</section>
 
-    </section>
+<!-- COMPETENCES -->
+<section>
 
-    <section>
-        <h2>📚 Compétences</h2>
-        <div class="grid-2">
-            <a class="card" href="#">P3 - Carine</a>
-            <a class="card" href="#">P3 - Maxime</a>
-            <a class="card" href="#">P4 - Vanessa</a>
-            <a class="card" href="#">P4 - Laetitia</a>
-        </div>
-    </section>
+<h2>📚 Compétences</h2>
 
-    <section>
-        <h2>📊 Résultats</h2>
-        <div class="grid-2">
-            <a class="card" href="#">P3 - Carine</a>
-            <a class="card" href="#">P3 - Maxime</a>
-            <a class="card" href="#">P4 - Vanessa</a>
-            <a class="card" href="#">P4 - Laetitia</a>
-        </div>
-    </section>
+<div class="grid">
 
-    <section>
-        <h2>📝 Bulletins</h2>
-        <div class="grid-2">
-            <a class="card" href="#">P3 - Carine</a>
-            <a class="card" href="#">P3 - Maxime</a>
-            <a class="card" href="#">P4 - Vanessa</a>
-            <a class="card" href="#">P4 - Laetitia</a>
-        </div>
-    </section>
+<a class="card" href="#">📚 P3 - Carine</a>
+<a class="card" href="#">📚 P3 - Maxime</a>
+<a class="card" href="#">📚 P4 - Vanessa</a>
+<a class="card" href="#">📚 P4 - Laetitia</a>
 
-    <section>
-        <h2>📁 Documents</h2>
-        <div class="grid">
-            <a class="card" target="_blank"
-               href="https://drive.google.com/drive/folders/1oeyzHDuosKzSJb4nDD5C3-bxAVMLF3EM">
-                📁 Google Drive
-            </a>
-        </div>
-    </section>
+</div>
 
-    <section>
-        <h2>📁 Dossiers Teams</h2>
-        <div class="grid-2">
-            <a class="card" href="#">📂 P3 - Carine</a>
-            <a class="card" href="#">📂 P3 - Maxime</a>
-            <a class="card" href="#">📂 P4 - Vanessa</a>
-            <a class="card" href="#">📂 P4 - Laetitia</a>
-        </div>
-    </section>
+</section>
 
-    <section>
-        <h2>📅 Calendrier commun</h2>
+<!-- RESULTATS -->
+<section>
 
-        <div class="calendar-box">
-            <iframe
-                src="https://calendar.google.com/calendar/embed?src=9f6cd656190088fd2983f102672de5f78d59ae91c014824b6db0cbed336673a0%40group.calendar.google.com&ctz=Europe%2FBrussels&mode=AGENDA"
-                width="100%"
-                height="600"
-                frameborder="0">
-            </iframe>
-        </div>
-    </section>
+<h2>📊 Résultats</h2>
+
+<div class="grid">
+
+<a class="card" href="#">📊 P3 - Carine</a>
+<a class="card" href="#">📊 P3 - Maxime</a>
+<a class="card" href="#">📊 P4 - Vanessa</a>
+<a class="card" href="#">📊 P4 - Laetitia</a>
+
+</div>
+
+</section>
+
+<!-- BULLETINS -->
+<section>
+
+<h2>📝 Bulletins</h2>
+
+<div class="grid">
+
+<a class="card" href="#">📝 P3 - Carine</a>
+<a class="card" href="#">📝 P3 - Maxime</a>
+<a class="card" href="#">📝 P4 - Vanessa</a>
+<a class="card" href="#">📝 P4 - Laetitia</a>
+
+</div>
+
+</section>
+
+<!-- TEAMS -->
+<section>
+
+<h2>💬 Dossiers Teams</h2>
+
+<div class="grid">
+
+<a class="card" href="#">💬 P3 - Carine</a>
+<a class="card" href="#">💬 P3 - Maxime</a>
+<a class="card" href="#">💬 P4 - Vanessa</a>
+<a class="card" href="#">💬 P4 - Laetitia</a>
+
+</div>
+
+</section>
+
+<!-- DOCUMENTS -->
+<section>
+
+<h2>📁 Documents</h2>
+
+<div class="grid">
+
+<a class="card" href="https://drive.google.com/drive/folders/1oeyzHDuosKzSJb4nDD5C3-bxAVMLF3EM?usp=sharing" target="_blank">
+📁 Google Drive
+</a>
+
+<a class="card" href="#">
+👥 Liste des groupes
+</a>
+
+</div>
+
+</section>
+
+<!-- CALENDRIER + IMAGE -->
+<section>
+
+<h2>📅 Calendrier commun</h2>
+
+<div class="calendar-box">
+
+    <iframe
+        src="https://calendar.google.com/calendar/embed?src=9f6cd656190088fd2983f102672de5f78d59ae91c014824b6db0cbed336673a0%40group.calendar.google.com&ctz=Europe%2FBrussels&mode=AGENDA"
+        style="border:0"
+        width="100%"
+        height="650"
+        loading="lazy">
+    </iframe>
+
+    <!-- HORAIRE PROFS -->
+    <div class="timetable">
+        <img src="images/horaire-profs.png" alt="Horaire des professeurs">
+    </div>
+
+</div>
+
+</section>
 
 </main>
 
 <footer>
-    <p>Collaboration P3 / P4</p>
+École primaire — Collaboration P3 / P4
 </footer>
+
+</div>
 
 </body>
 </html>

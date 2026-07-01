@@ -171,3 +171,15 @@ footer {
     75% { transform: translateX(-6px); }
     100% { transform: translateX(0); }
 }
+
+.timetable {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.timetable img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
