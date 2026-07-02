@@ -361,3 +361,23 @@ footer {
     border: 2px solid #f4a261;
     border-radius: 8px;
 }
+
+/* 🔥 JOUR D'AUJOURD'HUI (mise en évidence claire) */
+.day.today {
+    background: rgba(231, 111, 81, 0.18);
+    border: 2px solid var(--primary-dark);
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* petit cercle accent sur le numéro */
+.day.today .day-number {
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
