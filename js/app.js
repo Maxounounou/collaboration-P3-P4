@@ -13,9 +13,10 @@ let urgences = [];
 let infos = [];
 
 let selectedDateGlobal = null;
+let currentDate = new Date();
 
 // =========================
-// 🔒 INITIALISATION
+// 🔒 INIT
 // =========================
 
 window.addEventListener("load", () => {
@@ -30,7 +31,7 @@ window.addEventListener("load", () => {
 });
 
 // =========================
-// 🔑 PIN SYSTEM
+// 🔑 PIN
 // =========================
 
 function checkPin() {
@@ -63,12 +64,12 @@ function unlock() {
 // 🚀 INIT APP
 // =========================
 
-function initApp() {
-    loadAll();
+async function initApp() {
+    await loadAll();
 }
 
 // =========================
-// 📦 LOAD EVERYTHING
+// 📦 LOAD ALL
 // =========================
 
 async function loadAll() {
@@ -85,8 +86,6 @@ async function loadAll() {
 // =========================
 // 📅 CALENDRIER
 // =========================
-
-let currentDate = new Date();
 
 const monthNames = [
     "Janvier","Février","Mars","Avril","Mai","Juin",
@@ -108,16 +107,19 @@ function renderCalendar() {
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
+    // jours vides
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
+    const todayStr = new Date().toISOString().split("T")[0];
+
     for (let day = 1; day <= daysInMonth; day++) {
+
         const cell = document.createElement("div");
 
         const y = currentDate.getFullYear();
@@ -130,15 +132,15 @@ function renderCalendar() {
 
         cell.classList.add("day");
 
+        // ⭐ HIGHLIGHT TODAY
+        if (dateStr === todayStr) {
+            cell.classList.add("today");
+        }
+
         cell.innerHTML = `
             <div class="day-number">${day}</div>
             <div class="dots">
-                ${dayEvents.map(ev => {
-                    if (ev.category === "Réunion") return `<span class="dot red"></span>`;
-                    if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
-                    if (ev.category === "Sortie") return `<span class="dot green"></span>`;
-                    return `<span class="dot orange"></span>`;
-                }).join("")}
+                ${dayEvents.length > 0 ? "●" : ""}
             </div>
         `;
 
@@ -148,13 +150,8 @@ function renderCalendar() {
     }
 }
 
-function changeMonth(step) {
-    currentDate.setMonth(currentDate.getMonth() + step);
-    renderCalendar();
-}
-
 // =========================
-// 📌 JOUR
+// 📌 DAY VIEW
 // =========================
 
 function selectDay(day) {
@@ -171,17 +168,7 @@ function selectDay(day) {
 
     let html = `
         <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
-
-        <button onclick="openModal()" style="
-            margin-top:10px;
-            padding:6px 10px;
-            background: var(--primary);
-            color:white;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-        ">➕ Ajouter</button>
-
+        <button onclick="openModal()">➕ Ajouter</button>
         <hr>
     `;
 
@@ -202,7 +189,7 @@ function selectDay(day) {
 }
 
 // =========================
-// 📊 DASHBOARD (🔥 NOUVEAU IMPORTANT)
+// 📊 DASHBOARD
 // =========================
 
 function renderDashboard() {
@@ -211,23 +198,21 @@ function renderDashboard() {
 
     if (!urgentBox || !infoBox) return;
 
-    // 🔴 Urgences actives
     const activeUrgent = urgences.filter(u => u.active);
+    const visibleInfos = infos.filter(i => i.visible);
 
     urgentBox.innerHTML = activeUrgent.length
         ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
         : "Aucune urgence";
 
-    // 📢 Infos visibles
-    const visibleInfos = infos.filter(i => i.visible);
-
+    // ⭐ AJOUT MESSAGE + TITRE
     infoBox.innerHTML = visibleInfos.length
-        ? visibleInfos.map(i => `• ${i.title}`).join("<br>")
+        ? visibleInfos.map(i => `• ${i.title}<br><small>${i.message || ""}</small>`).join("<br><br>")
         : "Aucune information";
 }
 
 // =========================
-// 🔌 LOAD AIRTABLE
+// 🔌 AIRTABLE LOAD
 // =========================
 
 async function loadEvents() {
@@ -267,12 +252,13 @@ async function loadInfos() {
 
     infos = (data.records || []).map(r => ({
         title: r.fields.Titre,
+        message: r.fields.Message,   // ⭐ AJOUT IMPORTANT
         visible: r.fields.Visible
     }));
 }
 
 // =========================
-// ➕ MODAL (inchangé)
+// ➕ MODAL
 // =========================
 
 function openModal() {
@@ -313,7 +299,7 @@ function openModal() {
 }
 
 // =========================
-// 💾 SAVE EVENT (inchangé)
+// 💾 SAVE EVENT
 // =========================
 
 async function saveEvent() {
@@ -356,5 +342,8 @@ async function saveEvent() {
 
 window.saveEvent = saveEvent;
 window.openModal = openModal;
-window.changeMonth = changeMonth;
+window.changeMonth = (step) => {
+    currentDate.setMonth(currentDate.getMonth() + step);
+    loadAll();
+};
 window.checkPin = checkPin;
