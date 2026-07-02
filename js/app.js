@@ -68,15 +68,28 @@ function initApp() {
     loadAll();
 }
 
-async function loadAll() {
-    await Promise.all([
-        loadCalendar(),
-        loadUrgences(),
-        loadInfos()
-    ]);
+async function loadEvents() {
+    try {
+        const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
+            headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+        });
 
-    renderCalendar();
-    renderDashboard();
+        const data = await res.json();
+
+        console.log("📥 EVENTS RAW :", data);
+
+        events = (data.records || []).map(r => ({
+            title: r.fields.Titre,
+            date: r.fields.Date,
+            time: r.fields.Heure,
+            category: r.fields.Catégorie
+        }));
+
+        console.log("📅 EVENTS PARSED :", events);
+
+    } catch (err) {
+        console.error("❌ loadEvents error :", err);
+    }
 }
 
 // =========================
@@ -96,6 +109,7 @@ const monthNames = [
 ];
 
 function renderCalendar() {
+    if (!events) events = [];
     const grid = document.getElementById("calendar-grid");
     const title = document.getElementById("month-title");
     if (!grid || !title) return;
