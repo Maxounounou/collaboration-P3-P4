@@ -1,8 +1,8 @@
 const CORRECT_PIN = "4841";
 
 // 🔑 AIRTABLE
-const AIRTABLE_TOKEN = "TON_TOKEN_ICI";
-const BASE_ID = "TON_BASE_ID_ICI";
+const AIRTABLE_TOKEN = "pat66wglbJCY35pdo.5feecb9e3f5d58623cac64ab730c9c501b5f13996c7b665ed45fe86dcf99e812";
+const BASE_ID = "apphUnk8iYi34QlzQ";
 const TABLE = "Calendrier";
 
 let events = [];
@@ -183,11 +183,13 @@ function selectDay(day) {
 }
 
 // =========================
-// 🔌 AIRTABLE LOAD
+// 🔌 AIRTABLE LOAD + DEBUG
 // =========================
 
 async function loadEvents() {
     const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE}`;
+
+    console.log("📡 URL Airtable :", url);
 
     try {
         const res = await fetch(url, {
@@ -198,6 +200,13 @@ async function loadEvents() {
 
         const data = await res.json();
 
+        console.log("📥 RAW Airtable response :", data);
+
+        if (!data.records) {
+            console.error("❌ Aucun record reçu → problème API / token / table");
+            return;
+        }
+
         events = data.records.map(r => ({
             title: r.fields.Titre,
             date: r.fields.Date,
@@ -205,10 +214,12 @@ async function loadEvents() {
             category: r.fields.Catégorie
         }));
 
-        renderCalendar(); // 🔥 important : refresh calendrier après load
+        console.log("📅 EVENTS PARSED :", events);
+
+        renderCalendar();
 
     } catch (err) {
-        console.error("❌ Erreur Airtable :", err);
+        console.error("❌ Erreur Airtable fetch :", err);
     }
 }
 
@@ -225,7 +236,6 @@ function openModal() {
             <h3>➕ Nouvel événement</h3>
 
             <input id="ev-title" placeholder="Titre">
-
             <input id="ev-time" placeholder="Heure (ex: 10h30)">
 
             <select id="ev-category">
@@ -255,7 +265,7 @@ function openModal() {
 }
 
 // =========================
-// 💾 SAVE EVENT TO AIRTABLE
+// 💾 SAVE EVENT + DEBUG
 // =========================
 
 async function saveEvent() {
@@ -276,7 +286,9 @@ async function saveEvent() {
         }
     };
 
-    await fetch(url, {
+    console.log("📤 ENVOI AIRTABLE :", body);
+
+    const res = await fetch(url, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
@@ -285,9 +297,18 @@ async function saveEvent() {
         body: JSON.stringify(body)
     });
 
+    const data = await res.json();
+
+    console.log("📥 AIRTABLE RESPONSE SAVE :", data);
+
+    if (data.error) {
+        console.error("❌ ERREUR AIRTABLE SAVE :", data.error);
+        return;
+    }
+
     document.querySelector(".modal").remove();
 
-    await loadEvents(); // refresh data
+    await loadEvents();
 
     const day = parseInt(selectedDateGlobal.split("-")[2]);
     selectDay(day);
