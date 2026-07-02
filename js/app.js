@@ -6,6 +6,7 @@ const BASE_ID = "TON_BASE_ID_ICI";
 const TABLE = "Calendrier";
 
 let events = [];
+let selectedDateGlobal = null;
 
 // =========================
 // 🔒 INITIALISATION
@@ -91,14 +92,12 @@ function renderCalendar() {
 
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
-    // cases vides
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
-    // jours
     for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement("div");
 
@@ -147,12 +146,24 @@ function selectDay(day) {
     const month = String(currentDate.getMonth() + 1).padStart(2, "0");
     const d = String(day).padStart(2, "0");
 
-    const selectedDate = `${year}-${month}-${d}`;
+    selectedDateGlobal = `${year}-${month}-${d}`;
 
-    const dayEvents = events.filter(e => e.date === selectedDate);
+    const dayEvents = events.filter(e => e.date === selectedDateGlobal);
 
     let html = `
         <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
+
+        <button onclick="openModal()" style="
+            margin-top:10px;
+            padding:6px 10px;
+            background: var(--primary);
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        ">➕ Ajouter</button>
+
+        <hr>
     `;
 
     if (dayEvents.length === 0) {
@@ -172,7 +183,7 @@ function selectDay(day) {
 }
 
 // =========================
-// 🔌 AIRTABLE
+// 🔌 AIRTABLE LOAD
 // =========================
 
 async function loadEvents() {
@@ -187,8 +198,6 @@ async function loadEvents() {
 
         const data = await res.json();
 
-        console.log("📡 Airtable data :", data);
-
         events = data.records.map(r => ({
             title: r.fields.Titre,
             date: r.fields.Date,
@@ -196,9 +205,90 @@ async function loadEvents() {
             category: r.fields.Catégorie
         }));
 
-        console.log("📅 Events chargés :", events);
+        renderCalendar(); // 🔥 important : refresh calendrier après load
 
     } catch (err) {
         console.error("❌ Erreur Airtable :", err);
     }
+}
+
+// =========================
+// ➕ MODAL AJOUT EVENT
+// =========================
+
+function openModal() {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+        <div class="modal-box">
+            <h3>➕ Nouvel événement</h3>
+
+            <input id="ev-title" placeholder="Titre">
+
+            <input id="ev-time" placeholder="Heure (ex: 10h30)">
+
+            <select id="ev-category">
+                <option>Réunion</option>
+                <option>Piscine</option>
+                <option>Sortie</option>
+                <option>Évaluation</option>
+                <option>Autre</option>
+            </select>
+
+            <select id="ev-author">
+                <option>Maxime</option>
+                <option>Carine</option>
+                <option>Vanessa</option>
+                <option>Laetitia</option>
+            </select>
+
+            <button onclick="saveEvent()">Enregistrer</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
+
+// =========================
+// 💾 SAVE EVENT TO AIRTABLE
+// =========================
+
+async function saveEvent() {
+    const title = document.getElementById("ev-title").value;
+    const time = document.getElementById("ev-time").value;
+    const category = document.getElementById("ev-category").value;
+    const author = document.getElementById("ev-author").value;
+
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE}`;
+
+    const body = {
+        fields: {
+            Titre: title,
+            Date: selectedDateGlobal,
+            Heure: time,
+            Catégorie: category,
+            Auteur: author
+        }
+    };
+
+    await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+
+    document.querySelector(".modal").remove();
+
+    await loadEvents(); // refresh data
+
+    const day = parseInt(selectedDateGlobal.split("-")[2]);
+    selectDay(day);
 }
