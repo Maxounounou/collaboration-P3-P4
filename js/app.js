@@ -15,7 +15,7 @@ let infos = [];
 let selectedDateGlobal = null;
 
 // =========================
-// 🔒 INIT
+// 🔒 INITIALISATION
 // =========================
 
 window.addEventListener("load", () => {
@@ -30,7 +30,7 @@ window.addEventListener("load", () => {
 });
 
 // =========================
-// 🔑 PIN
+// 🔑 PIN SYSTEM
 // =========================
 
 function checkPin() {
@@ -60,15 +60,15 @@ function unlock() {
 }
 
 // =========================
-// 🚀 INIT
+// 🚀 INIT APP
 // =========================
 
-async function initApp() {
-    await loadAll();
+function initApp() {
+    loadAll();
 }
 
 // =========================
-// 📦 LOAD ALL
+// 📦 LOAD EVERYTHING
 // =========================
 
 async function loadAll() {
@@ -107,46 +107,39 @@ function renderCalendar() {
     title.innerText = `${monthNames[month]} ${year}`;
 
     const firstDay = new Date(year, month, 1).getDay();
-    const offset = firstDay === 0 ? 6 : firstDay - 1;
-
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // cases vides
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
-    // jours
     for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement("div");
 
         const y = currentDate.getFullYear();
         const m = String(currentDate.getMonth() + 1).padStart(2, "0");
         const d = String(day).padStart(2, "0");
 
         const dateStr = `${y}-${m}-${d}`;
+
         const dayEvents = events.filter(e => e.date === dateStr);
 
-        const cell = document.createElement("div");
         cell.classList.add("day");
 
-        // ⭐ RESTORE COULEURS
-        let dots = dayEvents.map(ev => {
-            if (ev.category === "Réunion") return `<span class="dot red"></span>`;
-            if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
-            if (ev.category === "Sortie") return `<span class="dot green"></span>`;
-            if (ev.category === "Evaluation") return `<span class="dot orange"></span>`;
-            return `<span class="dot orange"></span>`;
-        }).join("");
-
-        // ⭐ highlight aujourd'hui
-        const today = new Date().toISOString().split("T")[0];
-        const isToday = dateStr === today;
-
         cell.innerHTML = `
-            <div class="day-number ${isToday ? "today" : ""}">${day}</div>
-            <div class="dots">${dots}</div>
+            <div class="day-number">${day}</div>
+            <div class="dots">
+                ${dayEvents.map(ev => {
+                    if (ev.category === "Réunion") return `<span class="dot red"></span>`;
+                    if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
+                    if (ev.category === "Sortie") return `<span class="dot green"></span>`;
+                    return `<span class="dot orange"></span>`;
+                }).join("")}
+            </div>
         `;
 
         cell.onclick = () => selectDay(day);
@@ -155,8 +148,13 @@ function renderCalendar() {
     }
 }
 
+function changeMonth(step) {
+    currentDate.setMonth(currentDate.getMonth() + step);
+    renderCalendar();
+}
+
 // =========================
-// 📌 DAY
+// 📌 JOUR
 // =========================
 
 function selectDay(day) {
@@ -174,7 +172,15 @@ function selectDay(day) {
     let html = `
         <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
 
-        <button onclick="openModal()" class="add-btn">➕ Ajouter</button>
+        <button onclick="openModal()" style="
+            margin-top:10px;
+            padding:6px 10px;
+            background: var(--primary);
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        ">➕ Ajouter</button>
 
         <hr>
     `;
@@ -196,16 +202,7 @@ function selectDay(day) {
 }
 
 // =========================
-// 🔥 NAVIGATION MOIS (FIX)
-// =========================
-
-function changeMonth(step) {
-    currentDate.setMonth(currentDate.getMonth() + step);
-    renderCalendar();
-}
-
-// =========================
-// 📊 DASHBOARD
+// 📊 DASHBOARD (🔥 NOUVEAU IMPORTANT)
 // =========================
 
 function renderDashboard() {
@@ -214,12 +211,15 @@ function renderDashboard() {
 
     if (!urgentBox || !infoBox) return;
 
+    // 🔴 Urgences actives
     const activeUrgent = urgences.filter(u => u.active);
-    const visibleInfos = infos.filter(i => i.visible);
 
     urgentBox.innerHTML = activeUrgent.length
         ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
         : "Aucune urgence";
+
+    // 📢 Infos visibles
+    const visibleInfos = infos.filter(i => i.visible);
 
     infoBox.innerHTML = visibleInfos.length
         ? visibleInfos.map(i => `• ${i.title}`).join("<br>")
@@ -272,7 +272,7 @@ async function loadInfos() {
 }
 
 // =========================
-// ➕ MODAL (IMPORTANT FIX)
+// ➕ MODAL (inchangé)
 // =========================
 
 function openModal() {
@@ -313,7 +313,7 @@ function openModal() {
 }
 
 // =========================
-// 💾 SAVE
+// 💾 SAVE EVENT (inchangé)
 // =========================
 
 async function saveEvent() {
@@ -322,7 +322,7 @@ async function saveEvent() {
     const category = document.getElementById("ev-category").value;
     const author = document.getElementById("ev-author").value;
 
-    await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${AIRTABLE_TOKEN}`,
@@ -339,13 +339,19 @@ async function saveEvent() {
         })
     });
 
-    document.querySelector(".modal").remove();
-    await loadAll();
-    selectDay(parseInt(selectedDateGlobal.split("-")[2]));
+    const data = await res.json();
+
+    if (!data.error) {
+        document.querySelector(".modal").remove();
+        await loadAll();
+        selectDay(parseInt(selectedDateGlobal.split("-")[2]));
+    } else {
+        console.error("❌ AIRTABLE ERROR :", data.error);
+    }
 }
 
 // =========================
-// 🌐 GLOBAL FIX (IMPORTANT)
+// 🌐 GLOBAL
 // =========================
 
 window.saveEvent = saveEvent;
