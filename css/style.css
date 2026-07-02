@@ -246,3 +246,17 @@ footer {
     margin-top: 8px;
     border-radius: 6px;
 }
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary-dark);
+    font-size: 14px;
+}
+
+.calendar-weekdays div {
+    padding: 6px 0;
+}

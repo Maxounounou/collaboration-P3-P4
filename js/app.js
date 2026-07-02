@@ -1,14 +1,30 @@
 const CORRECT_PIN = "4841";
 
-window.onload = function () {
+// 🔑 AIRTABLE
+const AIRTABLE_TOKEN = "TON_TOKEN_ICI";
+const BASE_ID = "TON_BASE_ID_ICI";
+const TABLE = "Calendrier";
+
+let events = [];
+
+// =========================
+// 🔒 INITIALISATION LOCK
+// =========================
+
+window.addEventListener("load", () => {
     const unlocked = sessionStorage.getItem("unlocked");
 
     if (unlocked === "true") {
         unlock();
+        initApp(); // 👉 on démarre Airtable + calendrier
     } else {
         document.body.classList.add("locked");
     }
-};
+});
+
+// =========================
+// 🔑 PIN SYSTEM
+// =========================
 
 function checkPin() {
     const value = document.getElementById("pin").value;
@@ -17,6 +33,7 @@ function checkPin() {
     if (value === CORRECT_PIN) {
         sessionStorage.setItem("unlocked", "true");
         unlock();
+        initApp(); // 👉 IMPORTANT : lance le système après login
     } else {
         document.getElementById("error").innerText = "❌ Code incorrect";
 
@@ -37,7 +54,16 @@ function unlock() {
 }
 
 // =========================
-// 📅 CALENDRIER HYBRIDE (V1)
+// 🚀 INIT APP
+// =========================
+
+function initApp() {
+    renderCalendar();
+    loadEvents();
+}
+
+// =========================
+// 📅 CALENDRIER HYBRIDE
 // =========================
 
 let currentDate = new Date();
@@ -63,17 +89,14 @@ function renderCalendar() {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // ajustement (lundi = début)
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
-    // cases vides avant début du mois
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
-    // jours du mois
     for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement("div");
         cell.classList.add("day");
@@ -90,24 +113,70 @@ function changeMonth(step) {
     renderCalendar();
 }
 
+// =========================
+// 📌 JOUR + EVENTS
+// =========================
+
 function selectDay(day) {
     const panel = document.getElementById("day-events");
-
     if (!panel) return;
 
-    panel.innerHTML = `
-        <h3>📅 Jour sélectionné</h3>
-        <p><strong>${day} ${monthNames[currentDate.getMonth()]}</strong></p>
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const d = String(day).padStart(2, "0");
 
-        <div class="event">
-            <span>📌 Exemple : Réunion équipe</span>
-        </div>
+    const selectedDate = `${year}-${month}-${d}`;
 
-        <div class="event">
-            <span>🏊 Exemple : Piscine</span>
-        </div>
+    const dayEvents = events.filter(e => e.date === selectedDate);
+
+    let html = `
+        <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
     `;
+
+    if (dayEvents.length === 0) {
+        html += `<p>Aucun événement</p>`;
+    } else {
+        dayEvents.forEach(e => {
+            html += `
+                <div class="event">
+                    <strong>${e.time || ""}</strong> ${e.title}
+                    <br><small>${e.category || ""}</small>
+                </div>
+            `;
+        });
+    }
+
+    panel.innerHTML = html;
 }
 
-// lancer calendrier après chargement
-window.addEventListener("load", renderCalendar);
+// =========================
+// 🔌 AIRTABLE LOAD
+// =========================
+
+async function loadEvents() {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE}`;
+
+    try {
+        const res = await fetch(url, {
+            headers: {
+                "Authorization": `Bearer ${AIRTABLE_TOKEN}`
+            }
+        });
+
+        const data = await res.json();
+
+        console.log("📡 Airtable data :", data);
+
+        events = data.records.map(r => ({
+            title: r.fields.Titre,
+            date: r.fields.Date,
+            time: r.fields.Heure,
+            category: r.fields.Catégorie
+        }));
+
+        console.log("📅 Events formatés :", events);
+
+    } catch (err) {
+        console.error("❌ Erreur Airtable :", err);
+    }
+}
