@@ -313,3 +313,8 @@ async function saveEvent() {
     const day = parseInt(selectedDateGlobal.split("-")[2]);
     selectDay(day);
 }
+
+window.saveEvent = saveEvent;
+window.openModal = openModal;
+window.changeMonth = changeMonth;
+window.checkPin = checkPin;

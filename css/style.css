@@ -332,3 +332,8 @@ footer {
     border-radius: 6px;
     cursor: pointer;
 }
+
+.modal-box button {
+    pointer-events: auto;
+    z-index: 9999;
+}
