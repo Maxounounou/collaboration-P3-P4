@@ -241,9 +241,9 @@ function openModal() {
             <select id="ev-category">
                 <option>Réunion</option>
                 <option>Piscine</option>
-                <option>Sortie</option>
-                <option>Évaluation</option>
-                <option>Autre</option>
+                <option>Excursion</option>
+                <option>Evaluation</option>
+                <option>Divers</option>
             </select>
 
             <select id="ev-author">
