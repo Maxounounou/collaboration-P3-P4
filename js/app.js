@@ -1,7 +1,7 @@
 const CORRECT_PIN = "4841";
 
 // 🔑 AIRTABLE
-const AIRTABLE_TOKEN = "TON_TOKEN_ICI";
+const AIRTABLE_TOKEN = "pat66wglbJCY35pdo.5feecb9e3f5d58623cac64ab730c9c501b5f13996c7b665ed45fe86dcf99e812";
 const BASE_ID = "apphUnk8iYi34QlzQ";
 
 // 📊 TABLES
