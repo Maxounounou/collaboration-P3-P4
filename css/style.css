@@ -171,3 +171,78 @@ footer {
     75% { transform: translateX(-6px); }
     100% { transform: translateX(0); }
 }
+
+/* =========================
+📅 CALENDRIER HYBRIDE
+========================= */
+
+.calendar-section {
+    margin-top: 40px;
+}
+
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.calendar {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.calendar-header button {
+    background: var(--primary);
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.day {
+    background: #fff7f2;
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.day:hover {
+    background: #ffe5d9;
+}
+
+.day.empty {
+    background: transparent;
+    cursor: default;
+}
+
+.day-panel {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.event {
+    background: #fff7f2;
+    padding: 8px;
+    margin-top: 8px;
+    border-radius: 6px;
+}

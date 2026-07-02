@@ -85,7 +85,7 @@
     </section>
 
     <section>
-        <h2>📝 Bulletins</h2>
+        <h2>📝 Commentaires des bulletins</h2>
         <div class="grid-2">
             <a class="card" href="https://drive.google.com/drive/u/1/folders/1cEWsRuT_Sdq5OGhGDb8WCxx-SjEX__1f">P3 - Carine</a>
             <a class="card" href="https://drive.google.com/drive/u/1/folders/17au_F7Uf29lDmkAdAjb9QT0ZOn9mE4U1">P3 - Maxime</a>
@@ -114,18 +114,36 @@
         </div>
     </section>
 
-    <section>
-        <h2>📅 Calendrier commun</h2>
+ <section class="calendar-section">
 
-        <div class="calendar-box">
-            <iframe
-                src="https://calendar.google.com/calendar/embed?src=9f6cd656190088fd2983f102672de5f78d59ae91c014824b6db0cbed336673a0%40group.calendar.google.com&ctz=Europe%2FBrussels&mode=AGENDA"
-                width="100%"
-                height="600"
-                frameborder="0">
-            </iframe>
+    <h2>📅 Calendrier commun</h2>
+
+    <div class="calendar-layout">
+
+        <!-- 📅 CALENDRIER (MOIS) -->
+        <div class="calendar">
+
+            <div class="calendar-header">
+                <button onclick="changeMonth(-1)">⬅</button>
+                <h3 id="month-title">Mois</h3>
+                <button onclick="changeMonth(1)">➡</button>
+            </div>
+
+            <div class="calendar-grid" id="calendar-grid"></div>
+
         </div>
-    </section>
+
+        <!-- 📌 PANNEAU JOUR -->
+        <div class="day-panel" id="day-events">
+
+            <h3>📅 Jour sélectionné</h3>
+            <p>Clique sur un jour</p>
+
+        </div>
+
+    </div>
+
+</section>
 
 </main>
 
