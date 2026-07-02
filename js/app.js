@@ -13,7 +13,6 @@ let urgences = [];
 let infos = [];
 
 let selectedDateGlobal = null;
-let currentDate = new Date();
 
 // =========================
 // 🔒 INIT
@@ -53,6 +52,7 @@ function unlock() {
     const lock = document.getElementById("lock-screen");
 
     lock.style.opacity = "0";
+
     setTimeout(() => {
         lock.style.display = "none";
         document.body.classList.remove("locked");
@@ -60,7 +60,7 @@ function unlock() {
 }
 
 // =========================
-// 🚀 INIT APP
+// 🚀 INIT
 // =========================
 
 async function initApp() {
@@ -80,12 +80,13 @@ async function loadAll() {
 
     renderCalendar();
     renderDashboard();
-    renderTodayPanel();
 }
 
 // =========================
 // 📅 CALENDRIER
 // =========================
+
+let currentDate = new Date();
 
 const monthNames = [
     "Janvier","Février","Mars","Avril","Mai","Juin",
@@ -106,17 +107,18 @@ function renderCalendar() {
     title.innerText = `${monthNames[month]} ${year}`;
 
     const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // cases vides
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
-    const todayStr = new Date().toISOString().split("T")[0];
-
+    // jours
     for (let day = 1; day <= daysInMonth; day++) {
 
         const y = currentDate.getFullYear();
@@ -129,25 +131,32 @@ function renderCalendar() {
         const cell = document.createElement("div");
         cell.classList.add("day");
 
-        if (dateStr === todayStr) {
-            cell.classList.add("today");
-        }
+        // ⭐ RESTORE COULEURS
+        let dots = dayEvents.map(ev => {
+            if (ev.category === "Réunion") return `<span class="dot red"></span>`;
+            if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
+            if (ev.category === "Sortie") return `<span class="dot green"></span>`;
+            if (ev.category === "Evaluation") return `<span class="dot orange"></span>`;
+            return `<span class="dot orange"></span>`;
+        }).join("");
 
-        let dots = "";
-        dayEvents.forEach(() => dots += "●");
+        // ⭐ highlight aujourd'hui
+        const today = new Date().toISOString().split("T")[0];
+        const isToday = dateStr === today;
 
         cell.innerHTML = `
-            <div class="day-number">${day}</div>
+            <div class="day-number ${isToday ? "today" : ""}">${day}</div>
             <div class="dots">${dots}</div>
         `;
 
         cell.onclick = () => selectDay(day);
+
         grid.appendChild(cell);
     }
 }
 
 // =========================
-// 📌 SELECT DAY
+// 📌 DAY
 // =========================
 
 function selectDay(day) {
@@ -164,7 +173,9 @@ function selectDay(day) {
 
     let html = `
         <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
-        <button onclick="openModal()">➕ Ajouter</button>
+
+        <button onclick="openModal()" class="add-btn">➕ Ajouter</button>
+
         <hr>
     `;
 
@@ -185,6 +196,15 @@ function selectDay(day) {
 }
 
 // =========================
+// 🔥 NAVIGATION MOIS (FIX)
+// =========================
+
+function changeMonth(step) {
+    currentDate.setMonth(currentDate.getMonth() + step);
+    renderCalendar();
+}
+
+// =========================
 // 📊 DASHBOARD
 // =========================
 
@@ -198,36 +218,12 @@ function renderDashboard() {
     const visibleInfos = infos.filter(i => i.visible);
 
     urgentBox.innerHTML = activeUrgent.length
-        ? activeUrgent.map(u => `🚨 ${u.title} - ${u.message || ""}`).join("<br>")
+        ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
         : "Aucune urgence";
 
     infoBox.innerHTML = visibleInfos.length
-        ? visibleInfos.map(i => `ℹ️ ${i.title}`).join("<br>")
+        ? visibleInfos.map(i => `• ${i.title}`).join("<br>")
         : "Aucune information";
-}
-
-// =========================
-// 📅 TODAY PANEL
-// =========================
-
-function renderTodayPanel() {
-    const panel = document.getElementById("today-panel");
-    if (!panel) return;
-
-    const today = new Date().toISOString().split("T")[0];
-    const todayEvents = events.filter(e => e.date === today);
-
-    panel.innerHTML = `
-        <h3>📅 Aujourd’hui</h3>
-        ${todayEvents.length
-            ? todayEvents.map(e => `
-                <div class="event">
-                    <strong>${e.time || ""}</strong> ${e.title}
-                </div>
-            `).join("")
-            : "<p>Aucun événement</p>"
-        }
-    `;
 }
 
 // =========================
@@ -258,7 +254,6 @@ async function loadUrgences() {
 
     urgences = (data.records || []).map(r => ({
         title: r.fields.Titre,
-        message: r.fields.Message,
         active: r.fields.Active
     }));
 }
@@ -277,7 +272,7 @@ async function loadInfos() {
 }
 
 // =========================
-// ➕ MODAL
+// ➕ MODAL (IMPORTANT FIX)
 // =========================
 
 function openModal() {
@@ -318,7 +313,7 @@ function openModal() {
 }
 
 // =========================
-// 💾 SAVE EVENT
+// 💾 SAVE
 // =========================
 
 async function saveEvent() {
@@ -346,19 +341,14 @@ async function saveEvent() {
 
     document.querySelector(".modal").remove();
     await loadAll();
-
-    const day = parseInt(selectedDateGlobal.split("-")[2]);
-    selectDay(day);
+    selectDay(parseInt(selectedDateGlobal.split("-")[2]));
 }
 
 // =========================
-// 🌐 GLOBAL
+// 🌐 GLOBAL FIX (IMPORTANT)
 // =========================
 
-window.checkPin = checkPin;
-window.changeMonth = () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    loadAll();
-};
-window.openModal = openModal;
 window.saveEvent = saveEvent;
+window.openModal = openModal;
+window.changeMonth = changeMonth;
+window.checkPin = checkPin;
