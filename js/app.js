@@ -1,7 +1,7 @@
 const CORRECT_PIN = "4841";
 
 // 🔑 AIRTABLE
-const AIRTABLE_TOKEN = "pat66wglbJCY35pdo.5feecb9e3f5d58623cac64ab730c9c501b5f13996c7b665ed45fe86dcf99e812";
+const AIRTABLE_TOKEN = "TON_TOKEN_ICI";
 const BASE_ID = "apphUnk8iYi34QlzQ";
 const TABLE = "Calendrier";
 
@@ -37,7 +37,6 @@ function checkPin() {
         initApp();
     } else {
         document.getElementById("error").innerText = "❌ Code incorrect";
-
         box.classList.add("shake");
         setTimeout(() => box.classList.remove("shake"), 300);
     }
@@ -61,6 +60,7 @@ function unlock() {
 function initApp() {
     renderCalendar();
     loadEvents();
+    renderTodayPanel();
 }
 
 // =========================
@@ -118,6 +118,7 @@ function renderCalendar() {
                     if (ev.category === "Réunion") return `<span class="dot red"></span>`;
                     if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
                     if (ev.category === "Sortie") return `<span class="dot green"></span>`;
+                    if (ev.category === "Evaluation") return `<span class="dot orange"></span>`;
                     return `<span class="dot orange"></span>`;
                 }).join("")}
             </div>
@@ -183,7 +184,31 @@ function selectDay(day) {
 }
 
 // =========================
-// 🔌 AIRTABLE LOAD + DEBUG
+// 🔥 DASHBOARD "AUJOURD'HUI"
+// =========================
+
+function renderTodayPanel() {
+    const today = new Date().toISOString().split("T")[0];
+    const todayEvents = events.filter(e => e.date === today);
+
+    const panel = document.getElementById("today-panel");
+    if (!panel) return;
+
+    panel.innerHTML = `
+        <h3>📅 Aujourd’hui</h3>
+        ${todayEvents.length === 0
+            ? "<p>Aucun événement</p>"
+            : todayEvents.map(e => `
+                <div class="event">
+                    <strong>${e.time || ""}</strong> ${e.title}
+                </div>
+            `).join("")
+        }
+    `;
+}
+
+// =========================
+// 🔌 AIRTABLE LOAD
 // =========================
 
 async function loadEvents() {
@@ -202,10 +227,7 @@ async function loadEvents() {
 
         console.log("📥 RAW Airtable response :", data);
 
-        if (!data.records) {
-            console.error("❌ Aucun record reçu → problème API / token / table");
-            return;
-        }
+        if (!data.records) return;
 
         events = data.records.map(r => ({
             title: r.fields.Titre,
@@ -217,14 +239,15 @@ async function loadEvents() {
         console.log("📅 EVENTS PARSED :", events);
 
         renderCalendar();
+        renderTodayPanel();
 
     } catch (err) {
-        console.error("❌ Erreur Airtable fetch :", err);
+        console.error("❌ Erreur Airtable :", err);
     }
 }
 
 // =========================
-// ➕ MODAL AJOUT EVENT
+// ➕ MODAL
 // =========================
 
 function openModal() {
@@ -236,14 +259,14 @@ function openModal() {
             <h3>➕ Nouvel événement</h3>
 
             <input id="ev-title" placeholder="Titre">
-            <input id="ev-time" placeholder="Heure (ex: 10h30)">
+            <input id="ev-time" placeholder="Heure">
 
             <select id="ev-category">
                 <option>Réunion</option>
                 <option>Piscine</option>
-                <option>Excursion</option>
+                <option>Sortie</option>
                 <option>Evaluation</option>
-                <option>Divers</option>
+                <option>Autre</option>
             </select>
 
             <select id="ev-author">
@@ -265,7 +288,7 @@ function openModal() {
 }
 
 // =========================
-// 💾 SAVE EVENT + DEBUG
+// 💾 SAVE EVENT
 // =========================
 
 async function saveEvent() {
@@ -286,8 +309,6 @@ async function saveEvent() {
         }
     };
 
-    console.log("📤 ENVOI AIRTABLE :", body);
-
     const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -299,20 +320,20 @@ async function saveEvent() {
 
     const data = await res.json();
 
-    console.log("📥 AIRTABLE RESPONSE SAVE :", data);
+    if (!data.error) {
+        document.querySelector(".modal").remove();
+        await loadEvents();
 
-    if (data.error) {
-        console.error("❌ ERREUR AIRTABLE SAVE :", data.error);
-        return;
+        const day = parseInt(selectedDateGlobal.split("-")[2]);
+        selectDay(day);
+    } else {
+        console.error("❌ AIRTABLE ERROR :", data.error);
     }
-
-    document.querySelector(".modal").remove();
-
-    await loadEvents();
-
-    const day = parseInt(selectedDateGlobal.split("-")[2]);
-    selectDay(day);
 }
+
+// =========================
+// 🌐 GLOBAL ACCESS
+// =========================
 
 window.saveEvent = saveEvent;
 window.openModal = openModal;
