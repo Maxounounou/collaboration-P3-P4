@@ -8,7 +8,7 @@ const TABLE = "Calendrier";
 let events = [];
 
 // =========================
-// 🔒 INITIALISATION LOCK
+// 🔒 INITIALISATION
 // =========================
 
 window.addEventListener("load", () => {
@@ -16,7 +16,7 @@ window.addEventListener("load", () => {
 
     if (unlocked === "true") {
         unlock();
-        initApp(); // 👉 on démarre Airtable + calendrier
+        initApp();
     } else {
         document.body.classList.add("locked");
     }
@@ -33,7 +33,7 @@ function checkPin() {
     if (value === CORRECT_PIN) {
         sessionStorage.setItem("unlocked", "true");
         unlock();
-        initApp(); // 👉 IMPORTANT : lance le système après login
+        initApp();
     } else {
         document.getElementById("error").innerText = "❌ Code incorrect";
 
@@ -63,7 +63,7 @@ function initApp() {
 }
 
 // =========================
-// 📅 CALENDRIER HYBRIDE
+// 📅 CALENDRIER
 // =========================
 
 let currentDate = new Date();
@@ -91,16 +91,38 @@ function renderCalendar() {
 
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
+    // cases vides
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
+    // jours
     for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement("div");
+
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const d = String(day).padStart(2, "0");
+
+        const dateStr = `${year}-${month}-${d}`;
+
+        const dayEvents = events.filter(e => e.date === dateStr);
+
         cell.classList.add("day");
-        cell.innerText = day;
+
+        cell.innerHTML = `
+            <div class="day-number">${day}</div>
+            <div class="dots">
+                ${dayEvents.map(ev => {
+                    if (ev.category === "Réunion") return `<span class="dot red"></span>`;
+                    if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
+                    if (ev.category === "Sortie") return `<span class="dot green"></span>`;
+                    return `<span class="dot orange"></span>`;
+                }).join("")}
+            </div>
+        `;
 
         cell.onclick = () => selectDay(day);
 
@@ -114,7 +136,7 @@ function changeMonth(step) {
 }
 
 // =========================
-// 📌 JOUR + EVENTS
+// 📌 JOUR SÉLECTIONNÉ
 // =========================
 
 function selectDay(day) {
@@ -150,7 +172,7 @@ function selectDay(day) {
 }
 
 // =========================
-// 🔌 AIRTABLE LOAD
+// 🔌 AIRTABLE
 // =========================
 
 async function loadEvents() {
@@ -174,7 +196,7 @@ async function loadEvents() {
             category: r.fields.Catégorie
         }));
 
-        console.log("📅 Events formatés :", events);
+        console.log("📅 Events chargés :", events);
 
     } catch (err) {
         console.error("❌ Erreur Airtable :", err);

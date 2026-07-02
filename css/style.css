@@ -260,3 +260,37 @@ footer {
 .calendar-weekdays div {
     padding: 6px 0;
 }
+
+.day {
+    background: #fff7f2;
+    padding: 8px;
+    border-radius: 8px;
+    min-height: 50px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.day-number {
+    font-weight: bold;
+}
+
+.dots {
+    margin-top: 4px;
+    display: flex;
+    gap: 3px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.red { background: #e74c3c; }
+.blue { background: #3498db; }
+.green { background: #2ecc71; }
+.orange { background: #f4a261; }
