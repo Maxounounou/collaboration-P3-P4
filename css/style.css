@@ -356,3 +356,8 @@ footer {
     border-radius: 6px;
     background: #eee;
 }
+
+.today {
+    border: 2px solid #f4a261;
+    border-radius: 8px;
+}

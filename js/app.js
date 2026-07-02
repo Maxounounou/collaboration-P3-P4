@@ -13,6 +13,7 @@ let urgences = [];
 let infos = [];
 
 let selectedDateGlobal = null;
+let currentDate = new Date();
 
 // =========================
 // 🔒 INIT
@@ -52,7 +53,6 @@ function unlock() {
     const lock = document.getElementById("lock-screen");
 
     lock.style.opacity = "0";
-
     setTimeout(() => {
         lock.style.display = "none";
         document.body.classList.remove("locked");
@@ -60,7 +60,7 @@ function unlock() {
 }
 
 // =========================
-// 🚀 INIT APP (FIX IMPORTANT)
+// 🚀 INIT APP
 // =========================
 
 async function initApp() {
@@ -68,7 +68,7 @@ async function initApp() {
 }
 
 // =========================
-// 📦 LOAD ALL (IMPORTANT)
+// 📦 LOAD ALL
 // =========================
 
 async function loadAll() {
@@ -80,13 +80,12 @@ async function loadAll() {
 
     renderCalendar();
     renderDashboard();
+    renderTodayPanel();
 }
 
 // =========================
 // 📅 CALENDRIER
 // =========================
-
-let currentDate = new Date();
 
 const monthNames = [
     "Janvier","Février","Mars","Avril","Mai","Juin",
@@ -108,7 +107,6 @@ function renderCalendar() {
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
     for (let i = 0; i < offset; i++) {
@@ -117,8 +115,9 @@ function renderCalendar() {
         grid.appendChild(empty);
     }
 
+    const todayStr = new Date().toISOString().split("T")[0];
+
     for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement("div");
 
         const y = currentDate.getFullYear();
         const m = String(currentDate.getMonth() + 1).padStart(2, "0");
@@ -127,23 +126,28 @@ function renderCalendar() {
         const dateStr = `${y}-${m}-${d}`;
         const dayEvents = events.filter(e => e.date === dateStr);
 
+        const cell = document.createElement("div");
         cell.classList.add("day");
+
+        if (dateStr === todayStr) {
+            cell.classList.add("today");
+        }
+
+        let dots = "";
+        dayEvents.forEach(() => dots += "●");
 
         cell.innerHTML = `
             <div class="day-number">${day}</div>
-            <div class="dots">
-                ${dayEvents.length > 0 ? "●" : ""}
-            </div>
+            <div class="dots">${dots}</div>
         `;
 
         cell.onclick = () => selectDay(day);
-
         grid.appendChild(cell);
     }
 }
 
 // =========================
-// 📌 DAY VIEW
+// 📌 SELECT DAY
 // =========================
 
 function selectDay(day) {
@@ -160,9 +164,7 @@ function selectDay(day) {
 
     let html = `
         <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
-
         <button onclick="openModal()">➕ Ajouter</button>
-
         <hr>
     `;
 
@@ -196,16 +198,40 @@ function renderDashboard() {
     const visibleInfos = infos.filter(i => i.visible);
 
     urgentBox.innerHTML = activeUrgent.length
-        ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
+        ? activeUrgent.map(u => `🚨 ${u.title} - ${u.message || ""}`).join("<br>")
         : "Aucune urgence";
 
     infoBox.innerHTML = visibleInfos.length
-        ? visibleInfos.map(i => `• ${i.title}`).join("<br>")
+        ? visibleInfos.map(i => `ℹ️ ${i.title}`).join("<br>")
         : "Aucune information";
 }
 
 // =========================
-// 🔌 LOAD AIRTABLE (SAFE)
+// 📅 TODAY PANEL
+// =========================
+
+function renderTodayPanel() {
+    const panel = document.getElementById("today-panel");
+    if (!panel) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const todayEvents = events.filter(e => e.date === today);
+
+    panel.innerHTML = `
+        <h3>📅 Aujourd’hui</h3>
+        ${todayEvents.length
+            ? todayEvents.map(e => `
+                <div class="event">
+                    <strong>${e.time || ""}</strong> ${e.title}
+                </div>
+            `).join("")
+            : "<p>Aucun événement</p>"
+        }
+    `;
+}
+
+// =========================
+// 🔌 LOAD AIRTABLE
 // =========================
 
 async function loadEvents() {
@@ -214,6 +240,7 @@ async function loadEvents() {
     });
 
     const data = await res.json();
+
     events = (data.records || []).map(r => ({
         title: r.fields.Titre,
         date: r.fields.Date,
@@ -228,8 +255,10 @@ async function loadUrgences() {
     });
 
     const data = await res.json();
+
     urgences = (data.records || []).map(r => ({
         title: r.fields.Titre,
+        message: r.fields.Message,
         active: r.fields.Active
     }));
 }
@@ -240,6 +269,7 @@ async function loadInfos() {
     });
 
     const data = await res.json();
+
     infos = (data.records || []).map(r => ({
         title: r.fields.Titre,
         visible: r.fields.Visible
@@ -247,7 +277,82 @@ async function loadInfos() {
 }
 
 // =========================
-// GLOBAL
+// ➕ MODAL
+// =========================
+
+function openModal() {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+        <div class="modal-box">
+            <h3>➕ Nouvel événement</h3>
+
+            <input id="ev-title" placeholder="Titre">
+            <input id="ev-time" placeholder="Heure">
+
+            <select id="ev-category">
+                <option>Réunion</option>
+                <option>Piscine</option>
+                <option>Sortie</option>
+                <option>Evaluation</option>
+                <option>Autre</option>
+            </select>
+
+            <select id="ev-author">
+                <option>Maxime</option>
+                <option>Carine</option>
+                <option>Vanessa</option>
+                <option>Laetitia</option>
+            </select>
+
+            <button onclick="saveEvent()">Enregistrer</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
+
+// =========================
+// 💾 SAVE EVENT
+// =========================
+
+async function saveEvent() {
+    const title = document.getElementById("ev-title").value;
+    const time = document.getElementById("ev-time").value;
+    const category = document.getElementById("ev-category").value;
+    const author = document.getElementById("ev-author").value;
+
+    await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            fields: {
+                Titre: title,
+                Date: selectedDateGlobal,
+                Heure: time,
+                Catégorie: category,
+                Auteur: author
+            }
+        })
+    });
+
+    document.querySelector(".modal").remove();
+    await loadAll();
+
+    const day = parseInt(selectedDateGlobal.split("-")[2]);
+    selectDay(day);
+}
+
+// =========================
+// 🌐 GLOBAL
 // =========================
 
 window.checkPin = checkPin;
@@ -255,3 +360,5 @@ window.changeMonth = () => {
     currentDate.setMonth(currentDate.getMonth() + 1);
     loadAll();
 };
+window.openModal = openModal;
+window.saveEvent = saveEvent;
