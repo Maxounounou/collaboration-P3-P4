@@ -1,11 +1,12 @@
 const CORRECT_PIN = "4841";
 
 // 🔑 AIRTABLE
-const AIRTABLE_TOKEN = "pat66wglbJCY35pdo.5feecb9e3f5d58623cac64ab730c9c501b5f13996c7b665ed45fe86dcf99e812";
+const AIRTABLE_TOKEN = "TON_TOKEN_ICI";
 const BASE_ID = "apphUnk8iYi34QlzQ";
 
-const TABLE_EVENTS = "Calendrier";
-const TABLE_URGENT = "Urgence";
+// 📊 TABLES
+const TABLE_CALENDAR = "Calendrier";
+const TABLE_URGENCE = "Urgence";
 const TABLE_INFO = "Informations";
 
 let events = [];
@@ -13,9 +14,10 @@ let urgences = [];
 let infos = [];
 
 let selectedDateGlobal = null;
+let currentDate = new Date();
 
 // =========================
-// 🔒 INITIALISATION
+// 🔒 INIT
 // =========================
 
 window.addEventListener("load", () => {
@@ -30,7 +32,7 @@ window.addEventListener("load", () => {
 });
 
 // =========================
-// 🔑 PIN SYSTEM
+// 🔑 PIN
 // =========================
 
 function checkPin() {
@@ -68,12 +70,12 @@ function initApp() {
 }
 
 // =========================
-// 📦 LOAD EVERYTHING
+// 📡 LOAD ALL DATA
 // =========================
 
 async function loadAll() {
     await Promise.all([
-        loadEvents(),
+        loadCalendar(),
         loadUrgences(),
         loadInfos()
     ]);
@@ -86,8 +88,6 @@ async function loadAll() {
 // 📅 CALENDRIER
 // =========================
 
-let currentDate = new Date();
-
 const monthNames = [
     "Janvier","Février","Mars","Avril","Mai","Juin",
     "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
@@ -96,7 +96,6 @@ const monthNames = [
 function renderCalendar() {
     const grid = document.getElementById("calendar-grid");
     const title = document.getElementById("month-title");
-
     if (!grid || !title) return;
 
     grid.innerHTML = "";
@@ -108,37 +107,39 @@ function renderCalendar() {
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
     const offset = firstDay === 0 ? 6 : firstDay - 1;
 
+    // cases vides
     for (let i = 0; i < offset; i++) {
         const empty = document.createElement("div");
         empty.classList.add("day", "empty");
         grid.appendChild(empty);
     }
 
+    const todayStr = new Date().toISOString().split("T")[0];
+
     for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement("div");
+        cell.classList.add("day");
 
-        const y = currentDate.getFullYear();
-        const m = String(currentDate.getMonth() + 1).padStart(2, "0");
-        const d = String(day).padStart(2, "0");
-
-        const dateStr = `${y}-${m}-${d}`;
+        const dateStr = formatDate(day);
 
         const dayEvents = events.filter(e => e.date === dateStr);
 
-        cell.classList.add("day");
+        // ⭐ highlight aujourd'hui
+        if (dateStr === todayStr) {
+            cell.classList.add("today");
+        }
 
         cell.innerHTML = `
             <div class="day-number">${day}</div>
-            <div class="dots">
-                ${dayEvents.map(ev => {
-                    if (ev.category === "Réunion") return `<span class="dot red"></span>`;
-                    if (ev.category === "Piscine") return `<span class="dot blue"></span>`;
-                    if (ev.category === "Sortie") return `<span class="dot green"></span>`;
-                    return `<span class="dot orange"></span>`;
-                }).join("")}
+
+            <div class="event-preview">
+                ${dayEvents.slice(0, 2).map(ev => `
+                    <div class="event-pill ${ev.category || ""}">
+                        ${ev.title}
+                    </div>
+                `).join("")}
             </div>
         `;
 
@@ -146,6 +147,13 @@ function renderCalendar() {
 
         grid.appendChild(cell);
     }
+}
+
+function formatDate(day) {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const d = String(day).padStart(2, "0");
+    return `${year}-${month}-${d}`;
 }
 
 function changeMonth(step) {
@@ -161,37 +169,20 @@ function selectDay(day) {
     const panel = document.getElementById("day-events");
     if (!panel) return;
 
-    const y = currentDate.getFullYear();
-    const m = String(currentDate.getMonth() + 1).padStart(2, "0");
-    const d = String(day).padStart(2, "0");
-
-    selectedDateGlobal = `${y}-${m}-${d}`;
+    selectedDateGlobal = formatDate(day);
 
     const dayEvents = events.filter(e => e.date === selectedDateGlobal);
 
-    let html = `
-        <h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>
-
-        <button onclick="openModal()" style="
-            margin-top:10px;
-            padding:6px 10px;
-            background: var(--primary);
-            color:white;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-        ">➕ Ajouter</button>
-
-        <hr>
-    `;
+    let html = `<h3>📅 ${day} ${monthNames[currentDate.getMonth()]}</h3>`;
 
     if (dayEvents.length === 0) {
-        html += `<p>Aucun événement</p>`;
+        html += "<p>Aucun événement</p>";
     } else {
         dayEvents.forEach(e => {
             html += `
                 <div class="event">
-                    <strong>${e.time || ""}</strong> ${e.title}
+                    <strong>${e.time || ""}</strong>
+                    <br>${e.title}
                     <br><small>${e.category || ""}</small>
                 </div>
             `;
@@ -202,36 +193,120 @@ function selectDay(day) {
 }
 
 // =========================
-// 📊 DASHBOARD (🔥 NOUVEAU IMPORTANT)
+// 📢 URGENCES
 // =========================
 
-function renderDashboard() {
-    const urgentBox = document.querySelector(".dash-card.urgent p");
-    const infoBox = document.querySelector(".dash-card.info p");
+async function loadUrgences() {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_URGENCE}`;
 
-    if (!urgentBox || !infoBox) return;
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+    });
 
-    // 🔴 Urgences actives
-    const activeUrgent = urgences.filter(u => u.active);
+    const data = await res.json();
 
-    urgentBox.innerHTML = activeUrgent.length
-        ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
-        : "Aucune urgence";
-
-    // 📢 Infos visibles
-    const visibleInfos = infos.filter(i => i.visible);
-
-    infoBox.innerHTML = visibleInfos.length
-        ? visibleInfos.map(i => `• ${i.title}`).join("<br>")
-        : "Aucune information";
+    urgences = (data.records || []).map(r => ({
+        title: r.fields.Titre,
+        message: r.fields.Message,
+        priority: r.fields.Priorité
+    }));
 }
 
 // =========================
-// 🔌 LOAD AIRTABLE
+// 📢 INFOS
 // =========================
 
-async function loadEvents() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
+async function loadInfos() {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_INFO}`;
+
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+    });
+
+    const data = await res.json();
+
+    infos = (data.records || []).map(r => ({
+        title: r.fields.Titre,
+        message: r.fields.Message,
+        visible: r.fields.Visible,
+        endDate: r.fields["Date de fin"]
+    }));
+}
+
+// =========================
+// 📊 DASHBOARD
+// =========================
+
+function renderDashboard() {
+    renderUrgences();
+    renderToday();
+    renderInfos();
+}
+
+function renderUrgences() {
+    const el = document.getElementById("urgent-panel");
+    if (!el) return;
+
+    el.innerHTML = `
+        <h3>⭐ Urgences</h3>
+        ${urgences.length === 0
+            ? "<p>Aucune urgence</p>"
+            : urgences.map(u => `
+                <div class="event urgent">
+                    <strong>${u.title}</strong><br>
+                    ${u.message || ""}
+                </div>
+            `).join("")
+        }
+    `;
+}
+
+function renderToday() {
+    const el = document.getElementById("today-panel");
+    if (!el) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const todayEvents = events.filter(e => e.date === today);
+
+    el.innerHTML = `
+        <h3>📅 Aujourd’hui</h3>
+        ${todayEvents.length === 0
+            ? "<p>Aucun événement</p>"
+            : todayEvents.map(e => `
+                <div class="event">
+                    <strong>${e.time || ""}</strong> ${e.title}
+                </div>
+            `).join("")
+        }
+    `;
+}
+
+function renderInfos() {
+    const el = document.getElementById("info-panel");
+    if (!el) return;
+
+    el.innerHTML = `
+        <h3>📢 Informations</h3>
+        ${infos.length === 0
+            ? "<p>Aucune info</p>"
+            : infos.map(i => `
+                <div class="event info">
+                    <strong>${i.title}</strong><br>
+                    ${i.message || ""}
+                </div>
+            `).join("")
+        }
+    `;
+}
+
+// =========================
+// 🔌 CALENDAR LOAD
+// =========================
+
+async function loadCalendar() {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_CALENDAR}`;
+
+    const res = await fetch(url, {
         headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
     });
 
@@ -245,116 +320,9 @@ async function loadEvents() {
     }));
 }
 
-async function loadUrgences() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_URGENT}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
-
-    const data = await res.json();
-
-    urgences = (data.records || []).map(r => ({
-        title: r.fields.Titre,
-        active: r.fields.Active
-    }));
-}
-
-async function loadInfos() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_INFO}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
-
-    const data = await res.json();
-
-    infos = (data.records || []).map(r => ({
-        title: r.fields.Titre,
-        visible: r.fields.Visible
-    }));
-}
-
 // =========================
-// ➕ MODAL (inchangé)
+// GLOBAL
 // =========================
 
-function openModal() {
-    const modal = document.createElement("div");
-    modal.classList.add("modal");
-
-    modal.innerHTML = `
-        <div class="modal-box">
-            <h3>➕ Nouvel événement</h3>
-
-            <input id="ev-title" placeholder="Titre">
-            <input id="ev-time" placeholder="Heure">
-
-            <select id="ev-category">
-                <option>Réunion</option>
-                <option>Piscine</option>
-                <option>Sortie</option>
-                <option>Evaluation</option>
-                <option>Autre</option>
-            </select>
-
-            <select id="ev-author">
-                <option>Maxime</option>
-                <option>Carine</option>
-                <option>Vanessa</option>
-                <option>Laetitia</option>
-            </select>
-
-            <button onclick="saveEvent()">Enregistrer</button>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    modal.onclick = (e) => {
-        if (e.target === modal) modal.remove();
-    };
-}
-
-// =========================
-// 💾 SAVE EVENT (inchangé)
-// =========================
-
-async function saveEvent() {
-    const title = document.getElementById("ev-title").value;
-    const time = document.getElementById("ev-time").value;
-    const category = document.getElementById("ev-category").value;
-    const author = document.getElementById("ev-author").value;
-
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            fields: {
-                Titre: title,
-                Date: selectedDateGlobal,
-                Heure: time,
-                Catégorie: category,
-                Auteur: author
-            }
-        })
-    });
-
-    const data = await res.json();
-
-    if (!data.error) {
-        document.querySelector(".modal").remove();
-        await loadAll();
-        selectDay(parseInt(selectedDateGlobal.split("-")[2]));
-    } else {
-        console.error("❌ AIRTABLE ERROR :", data.error);
-    }
-}
-
-// =========================
-// 🌐 GLOBAL
-// =========================
-
-window.saveEvent = saveEvent;
-window.openModal = openModal;
-window.changeMonth = changeMonth;
 window.checkPin = checkPin;
+window.changeMonth = changeMonth;
