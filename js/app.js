@@ -273,11 +273,10 @@ function openModal() {
             <input id="ev-time" placeholder="Heure">
 
             <select id="ev-category">
-                <option>Réunion</option>
-                <option>Piscine</option>
-                <option>Sortie</option>
-                <option>Evaluation</option>
-                <option>Autre</option>
+                <option>Réunion plénière</option>
+                <option>Réunion cellule</option>
+                <option>Excursion</option>
+                <option>Divers</option>
             </select>
 
             <select id="ev-author">
