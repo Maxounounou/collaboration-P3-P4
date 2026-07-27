@@ -503,7 +503,7 @@ footer {
 
     position:absolute;
 
-    background:white;
+    background:rgba(255,255,255,0.9);
 
     border:2px dashed var(--primary);
 
@@ -516,5 +516,20 @@ footer {
     cursor:move;
 
     pointer-events:auto;
+
+    color:red;
+
+    font-size:14px;
+
+    resize:both;
+
+    overflow:auto;
+
+}
+
+
+.pdf-field:focus {
+
+    outline:2px solid var(--primary-dark);
 
 }

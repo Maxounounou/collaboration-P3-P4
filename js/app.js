@@ -580,19 +580,13 @@ function toggleFormEditor(){
 
     if(editMode){
 
-        alert("Mode édition activé : cliquez sur le PDF pour ajouter un champ");
-
-        layer.style.pointerEvents="auto";
+        alert("Mode édition activé");
 
 
-        layer.onclick = createField;
+    }
+    else{
 
-
-    } else {
-
-        layer.style.pointerEvents="none";
-
-        layer.onclick=null;
+        saveFields();
 
     }
 
@@ -615,19 +609,122 @@ function createField(e){
     field.contentEditable=true;
 
 
-    field.innerText="Nouveau champ";
+    field.innerText="Votre texte";
 
 
     field.style.left =
-    e.offsetX + "px";
+    e.offsetX+"px";
 
 
     field.style.top =
-    e.offsetY + "px";
+    e.offsetY+"px";
+
+
+    field.dataset.id =
+    Date.now();
+
+
+
+    // déplacement souris
+
+    let offsetX;
+    let offsetY;
+    let dragging=false;
+
+
+    field.addEventListener("mousedown", function(event){
+
+        dragging=true;
+
+        offsetX =
+        event.offsetX;
+
+        offsetY =
+        event.offsetY;
+
+
+    });
+
+
+
+    document.addEventListener("mousemove", function(event){
+
+        if(!dragging) return;
+
+
+        const rect =
+        layer.getBoundingClientRect();
+
+
+        field.style.left =
+        (event.clientX - rect.left - offsetX)+"px";
+
+
+        field.style.top =
+        (event.clientY - rect.top - offsetY)+"px";
+
+
+    });
+
+
+
+    document.addEventListener("mouseup",function(){
+
+        dragging=false;
+
+    });
+
 
 
     layer.appendChild(field);
 
+
+}
+
+function saveFields(){
+
+
+    const fields =
+    [];
+
+
+    document.querySelectorAll(".pdf-field")
+    .forEach(field=>{
+
+
+        fields.push({
+
+            id:field.dataset.id,
+
+            x:field.offsetLeft,
+
+            y:field.offsetTop,
+
+            width:field.offsetWidth,
+
+            height:field.offsetHeight,
+
+            fontSize:getComputedStyle(field).fontSize
+
+        });
+
+
+    });
+
+
+    console.log(
+        "Champs sauvegardés :",
+        fields
+    );
+
+
+    localStorage.setItem(
+        currentFormType,
+        JSON.stringify(fields)
+    );
+
+
+    alert("Modèle enregistré ✅");
 
 }
 
@@ -640,3 +737,5 @@ window.downloadPDF=downloadPDF;
 window.toggleFormEditor = toggleFormEditor;
 
 window.createField = createField;
+
+window.saveFields = saveFields;
