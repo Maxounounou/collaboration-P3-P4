@@ -601,32 +601,32 @@ function toggleFormEditor(){
 function createField(e){
 
 
-const layer =
-document.getElementById("field-layer");
+    const layer =
+    document.getElementById("field-layer");
 
 
-const field =
-document.createElement("div");
+    const field =
+    document.createElement("div");
 
 
-field.className="pdf-field";
+    field.className="pdf-field";
 
 
-field.contentEditable=true;
-
-field.innerText="Nouveau champ";
+    field.contentEditable=true;
 
 
-field.style.left =
-e.offsetX+"px";
+    field.innerText="Nouveau champ";
 
 
-field.style.top =
-e.offsetY+"px";
+    field.style.left =
+    e.offsetX + "px";
 
 
+    field.style.top =
+    e.offsetY + "px";
 
-layer.appendChild(field);
+
+    layer.appendChild(field);
 
 
 }
@@ -638,3 +638,5 @@ window.closePDFEditor=closePDFEditor;
 window.downloadPDF=downloadPDF;
 
 window.toggleFormEditor = toggleFormEditor;
+
+window.createField = createField;
