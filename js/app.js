@@ -400,13 +400,12 @@ function openPDFEditor(type){
 
 async function loadPDF(url){
 
+    console.log("Chargement PDF :", url);
 
     const container =
     document.getElementById("pdf-container");
 
-
     container.innerHTML="";
-
 
     const pdf =
     await pdfjsLib.getDocument(url).promise;
