@@ -545,6 +545,8 @@ let formFields = [];
 
 async function loadFormFields(type){
 
+    console.log("Chargement modèle :", type);
+
     let url = "";
 
     if(type === "excursion"){
