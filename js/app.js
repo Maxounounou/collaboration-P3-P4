@@ -354,6 +354,7 @@ window.checkPin = checkPin;
 let currentPDF = "";
 let currentFormType = "";
 let formFields = [];
+let editMode = false;
 
 
 function openPDFEditor(type){
@@ -568,9 +569,72 @@ async function loadFormFields(type){
 
 }
 
+function toggleFormEditor(){
+
+    editMode = !editMode;
+
+
+    const layer =
+    document.getElementById("field-layer");
+
+
+    if(editMode){
+
+        alert("Mode édition activé : cliquez sur le PDF pour ajouter un champ");
+
+        layer.style.pointerEvents="auto";
+
+
+        layer.onclick = createField;
+
+
+    } else {
+
+        layer.style.pointerEvents="none";
+
+        layer.onclick=null;
+
+    }
+
+}
+
+function createField(e){
+
+
+const layer =
+document.getElementById("field-layer");
+
+
+const field =
+document.createElement("div");
+
+
+field.className="pdf-field";
+
+
+field.contentEditable=true;
+
+field.innerText="Nouveau champ";
+
+
+field.style.left =
+e.offsetX+"px";
+
+
+field.style.top =
+e.offsetY+"px";
+
+
+
+layer.appendChild(field);
+
+
+}
 
 window.openPDFEditor=openPDFEditor;
 
 window.closePDFEditor=closePDFEditor;
 
 window.downloadPDF=downloadPDF;
+
+window.toggleFormEditor = toggleFormEditor;

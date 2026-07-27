@@ -473,3 +473,48 @@ footer {
     display:block;
 
 }
+
+/* =========================
+📄 PDF FIELD EDITOR
+========================= */
+
+
+#pdf-container {
+    position:relative;
+}
+
+
+#field-layer {
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    pointer-events:none;
+
+}
+
+
+.pdf-field {
+
+    position:absolute;
+
+    background:white;
+
+    border:2px dashed var(--primary);
+
+    padding:5px;
+
+    min-width:120px;
+
+    min-height:30px;
+
+    cursor:move;
+
+    pointer-events:auto;
+
+}
