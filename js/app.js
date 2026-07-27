@@ -369,19 +369,15 @@ function openPDFEditor(type){
 
     if(type==="excursion"){
 
-        currentPDF =
-        "documents/excursion/excursion.pdf";
+    currentPDF =
+    "documents/excursion/excursion.pdf";
 
-        title.innerText =
-        "🚌 Formulaire excursion";
-
-
-        setTimeout(()=>{
-            createExcursionFields();
-},500);
-
+    title.innerText =
+    "🚌 Formulaire excursion";
 
 }
+
+
 
 
 
