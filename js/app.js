@@ -352,14 +352,15 @@ window.checkPin = checkPin;
 
 
 let currentPDF = "";
-
+let currentFormType = "";
+let formFields = [];
 
 
 function openPDFEditor(type){
 
+
     currentFormType = type;
 
-    loadFormFields(type);
 
     const editor = document.getElementById("pdf-editor");
 
@@ -386,17 +387,18 @@ function openPDFEditor(type){
 
     if(type==="remboursement"){
 
-        currentPDF =
-        "documents/remboursement/remboursement.pdf";
+    currentPDF =
+    "documents/remboursement/remboursement.pdf";
 
-        title.innerText =
-        "💶 Formulaire remboursement";
+    title.innerText =
+    "💶 Formulaire remboursement";
 
-    }
+}
 
 
+loadFormFields(type);
 
-    loadPDF(currentPDF);
+loadPDF(currentPDF);
 
 }
 
@@ -537,12 +539,6 @@ async function downloadPDF(){
 // 📄 FORMULAIRES PDF
 // =========================
 
-
-let currentFormType = "";
-let formFields = [];
-
-
-
 async function loadFormFields(type){
 
     console.log("Chargement modèle :", type);
@@ -578,54 +574,3 @@ window.openPDFEditor=openPDFEditor;
 window.closePDFEditor=closePDFEditor;
 
 window.downloadPDF=downloadPDF;
-
-function createExcursionFields(){
-
-
-const fields =
-document.getElementById("pdf-fields");
-
-
-fields.innerHTML="";
-
-
-
-const inputNom =
-document.createElement("input");
-
-
-inputNom.className="pdf-input";
-
-
-inputNom.placeholder="Nom de l'élève";
-
-
-inputNom.style.left="120px";
-inputNom.style.top="150px";
-
-
-
-fields.appendChild(inputNom);
-
-
-
-const inputClasse =
-document.createElement("input");
-
-
-inputClasse.className="pdf-input";
-
-
-inputClasse.placeholder="Classe";
-
-
-inputClasse.style.left="120px";
-inputClasse.style.top="200px";
-
-
-fields.appendChild(inputClasse);
-
-
-
-}
-
