@@ -357,6 +357,9 @@ let currentPDF = "";
 
 function openPDFEditor(type){
 
+    currentFormType = type;
+
+    loadFormFields(type);
 
     const editor = document.getElementById("pdf-editor");
 
@@ -530,7 +533,42 @@ async function downloadPDF(){
 
 }
 
+// =========================
+// 📄 FORMULAIRES PDF
+// =========================
 
+
+let currentFormType = "";
+let formFields = [];
+
+
+
+async function loadFormFields(type){
+
+    let url = "";
+
+    if(type === "excursion"){
+        url = "documents/excursion/fields.json";
+    }
+
+
+    if(type === "remboursement"){
+        url = "documents/remboursement/fields.json";
+    }
+
+
+    const response = await fetch(url);
+
+
+    const data = await response.json();
+
+
+    formFields = data.fields || [];
+
+
+    console.log("Champs chargés :", formFields);
+
+}
 
 
 window.openPDFEditor=openPDFEditor;
@@ -588,3 +626,4 @@ fields.appendChild(inputClasse);
 
 
 }
+
