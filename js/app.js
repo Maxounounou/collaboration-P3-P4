@@ -375,7 +375,13 @@ function openPDFEditor(type){
         title.innerText =
         "🚌 Formulaire excursion";
 
-    }
+
+        setTimeout(()=>{
+            createExcursionFields();
+},500);
+
+
+}
 
 
 
@@ -394,9 +400,6 @@ function openPDFEditor(type){
     loadPDF(currentPDF);
 
 }
-
-
-
 
 async function loadPDF(url){
 
@@ -487,7 +490,18 @@ async function downloadPDF(){
     const pdfDoc =
     await PDFLib.PDFDocument.load(existingPdfBytes);
 
+    const page =
+    pdfDoc.getPages()[0];
 
+
+    page.drawText(
+    document.querySelectorAll(".pdf-input")[0].value,
+    {
+    x:120,
+    y:650,
+    size:14
+    }
+);
 
     const pdfBytes =
     await pdfDoc.save();
@@ -528,3 +542,53 @@ window.openPDFEditor=openPDFEditor;
 window.closePDFEditor=closePDFEditor;
 
 window.downloadPDF=downloadPDF;
+
+function createExcursionFields(){
+
+
+const fields =
+document.getElementById("pdf-fields");
+
+
+fields.innerHTML="";
+
+
+
+const inputNom =
+document.createElement("input");
+
+
+inputNom.className="pdf-input";
+
+
+inputNom.placeholder="Nom de l'élève";
+
+
+inputNom.style.left="120px";
+inputNom.style.top="150px";
+
+
+
+fields.appendChild(inputNom);
+
+
+
+const inputClasse =
+document.createElement("input");
+
+
+inputClasse.className="pdf-input";
+
+
+inputClasse.placeholder="Classe";
+
+
+inputClasse.style.left="120px";
+inputClasse.style.top="200px";
+
+
+fields.appendChild(inputClasse);
+
+
+
+}

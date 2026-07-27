@@ -462,3 +462,53 @@ footer {
     cursor:pointer;
 
 }
+
+/* =========================
+📄 PDF FORMULAIRE
+========================= */
+
+
+#pdf-wrapper {
+
+    position:relative;
+
+    width:max-content;
+
+    margin:auto;
+
+}
+
+
+#pdf-container canvas {
+
+    display:block;
+
+}
+
+
+#pdf-fields {
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+}
+
+
+
+.pdf-input {
+
+    position:absolute;
+
+    border:2px solid #f4a261;
+
+    background:rgba(255,255,255,0.85);
+
+    padding:5px;
+
+    border-radius:5px;
+
+    font-size:14px;
+
+}
