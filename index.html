@@ -8,6 +8,8 @@
     <base target="_blank">
 
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="js/app.js" defer></script>
 </head>
 <body>
@@ -105,6 +107,24 @@
     </section>
 
     <section>
+
+    <h2>📝 Formulaires PDF</h2>
+
+    <div class="grid-2">
+
+        <a class="card" onclick="openPDFEditor('excursion')">
+            🚌 Formulaire excursion
+        </a>
+
+        <a class="card" onclick="openPDFEditor('remboursement')">
+            💶 Formulaire remboursement
+        </a>
+
+    </div>
+
+    </section>
+
+    <section>
         <h2>📁 Dossiers Teams</h2>
         <div class="grid-2">
             <a class="card" href="#">📂 P3 - Carine</a>
@@ -156,6 +176,38 @@
 </section>
 
 </main>
+
+<!-- 📄 PDF EDITOR -->
+
+<div id="pdf-editor" class="pdf-editor">
+
+    <div class="pdf-box">
+
+        <h2 id="pdf-title">
+            Document
+        </h2>
+
+
+        <div id="pdf-container"></div>
+
+
+        <div class="pdf-buttons">
+
+            <button onclick="downloadPDF()">
+                ⬇️ Télécharger le PDF
+            </button>
+
+
+            <button onclick="closePDFEditor()">
+                ❌ Fermer
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
 
 <footer>
     <p>Collaboration P3 / P4</p>

@@ -346,3 +346,186 @@ window.changeMonth = (step) => {
     loadAll();
 };
 window.checkPin = checkPin;
+// =========================
+// 📄 PDF FORMULAIRES
+// =========================
+
+
+let currentPDF = "";
+
+
+
+function openPDFEditor(type){
+
+
+    const editor = document.getElementById("pdf-editor");
+
+    editor.style.display="flex";
+
+
+    const title=document.getElementById("pdf-title");
+
+
+
+    if(type==="excursion"){
+
+        currentPDF =
+        "documents/excursion/excursion.pdf";
+
+        title.innerText =
+        "🚌 Formulaire excursion";
+
+    }
+
+
+
+    if(type==="remboursement"){
+
+        currentPDF =
+        "documents/remboursement/remboursement.pdf";
+
+        title.innerText =
+        "💶 Formulaire remboursement";
+
+    }
+
+
+
+    loadPDF(currentPDF);
+
+}
+
+
+
+
+async function loadPDF(url){
+
+
+    const container =
+    document.getElementById("pdf-container");
+
+
+    container.innerHTML="";
+
+
+    const pdf =
+    await pdfjsLib.getDocument(url).promise;
+
+
+
+    for(let pageNumber=1; pageNumber<=pdf.numPages; pageNumber++){
+
+
+        const page =
+        await pdf.getPage(pageNumber);
+
+
+        const scale = 1.5;
+
+
+        const viewport =
+        page.getViewport({
+            scale
+        });
+
+
+
+        const canvas =
+        document.createElement("canvas");
+
+
+        const context =
+        canvas.getContext("2d");
+
+
+        canvas.width =
+        viewport.width;
+
+
+        canvas.height =
+        viewport.height;
+
+
+
+        container.appendChild(canvas);
+
+
+
+        await page.render({
+
+            canvasContext:context,
+            viewport
+
+        }).promise;
+
+
+    }
+
+
+}
+
+
+
+
+function closePDFEditor(){
+
+    document.getElementById("pdf-editor").style.display="none";
+
+}
+
+
+
+
+async function downloadPDF(){
+
+
+    const existingPdfBytes =
+    await fetch(currentPDF)
+    .then(res=>res.arrayBuffer());
+
+
+
+    const pdfDoc =
+    await PDFLib.PDFDocument.load(existingPdfBytes);
+
+
+
+    const pdfBytes =
+    await pdfDoc.save();
+
+
+
+    const blob =
+    new Blob(
+        [pdfBytes],
+        {
+            type:"application/pdf"
+        }
+    );
+
+
+
+    const link =
+    document.createElement("a");
+
+
+    link.href =
+    URL.createObjectURL(blob);
+
+
+    link.download =
+    "formulaire_complete.pdf";
+
+
+    link.click();
+
+}
+
+
+
+
+window.openPDFEditor=openPDFEditor;
+
+window.closePDFEditor=closePDFEditor;
+
+window.downloadPDF=downloadPDF;

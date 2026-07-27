@@ -381,3 +381,84 @@ footer {
     align-items: center;
     justify-content: center;
 }
+
+/* =========================
+📄 PDF EDITOR
+========================= */
+
+
+.pdf-editor {
+
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,0,0.5);
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:9999;
+
+}
+
+
+.pdf-box {
+
+    background:white;
+
+    width:90%;
+    height:90%;
+
+    padding:20px;
+
+    border-radius:15px;
+
+    overflow:auto;
+
+}
+
+
+
+#pdf-container canvas {
+
+    display:block;
+
+    margin:20px auto;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.2);
+
+}
+
+
+
+.pdf-buttons {
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:15px;
+
+    margin-top:20px;
+
+}
+
+
+
+.pdf-buttons button {
+
+    background:var(--primary);
+
+    color:white;
+
+    border:none;
+
+    padding:12px 20px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+}
