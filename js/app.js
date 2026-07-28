@@ -388,7 +388,7 @@ let formFields = [];
 let editMode = false;
 
 
-function openPDFEditor(type){
+async function openPDFEditor(type){
 
 
     currentFormType = type;
