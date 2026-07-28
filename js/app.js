@@ -402,30 +402,26 @@ function openPDFEditor(type){
     const title=document.getElementById("pdf-title");
 
 
-
     if(type==="excursion"){
 
-    currentPDF =
-    "documents/excursion/excursion.pdf";
+        currentPDF =
+        "documents/excursion/excursion.pdf";
 
-    title.innerText =
-    "🚌 Formulaire excursion";
+        title.innerText =
+        "🚌 Formulaire excursion";
 
-}
-
-
-
+    }
 
 
     if(type==="remboursement"){
 
-    currentPDF =
-    "documents/remboursement/remboursement.pdf";
+        currentPDF =
+        "documents/remboursement/remboursement.pdf";
 
-    title.innerText =
-    "💶 Formulaire remboursement";
+        title.innerText =
+        "💶 Formulaire remboursement";
 
-}
+    }
 
 
     loadFormFields(type);
