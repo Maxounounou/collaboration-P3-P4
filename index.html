@@ -8,223 +8,359 @@
     <base href="./">
 
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-    <script> pdfjsLib.GlobalWorkerOptions.workerSrc ="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
-
-<script src="js/app.js" defer></script>
+    <script src="js/app.js" defer></script>
 </head>
+
 <body>
 
 <!-- 🔒 LOCK SCREEN -->
 <div id="lock-screen">
+
     <div class="lock-box" id="lock-box">
 
         <div class="lock-icon">🔒</div>
 
         <h2>Collaboration P3 / P4</h2>
+
         <p>Espace collaboratif de l'équipe pédagogique</p>
 
-        <input type="password" id="pin" maxlength="6" placeholder="••••••"
+        <input type="password"
+               id="pin"
+               maxlength="6"
+               placeholder="••••••"
                onkeydown="if(event.key==='Enter'){checkPin()}">
 
-        <button onclick="checkPin()">Accéder</button>
+        <button onclick="checkPin()">
+            Accéder
+        </button>
 
         <p id="error"></p>
 
     </div>
+
 </div>
 
+
 <!-- 🌐 CONTENU PRINCIPAL -->
+
 <header class="hero">
+
     <h1>👋 Collaboration P3 / P4</h1>
+
     <p>Espace de travail partagé</p>
+
 </header>
+
 
 <main class="container">
 
-    <section class="important">
-        <div class="alert">
-            📢 Bienvenue sur l’espace collaboratif P3 / P4
-        </div>
-    </section>
 
-    <section class="dashboard">
+<section class="important">
 
-        <div class="dash-card urgent">
-            <h3>⭐ Urgences</h3>
-            <p>Aucune urgence aujourd’hui</p>
-        </div>
-
-        <div class="dash-card info">
-            <h3>📢 Informations</h3>
-            <p>Réunion mardi 16h</p>
-        </div>
-
-        <div class="dash-card calendar">
-            <h3>📅 Calendrier</h3>
-            <p>Voir ci-dessous</p>
-        </div>
-
-    </section>
-
-    <section>
-        <h2>📚 Compétences</h2>
-        <div class="grid-2">
-            <a class="card" href="https://airtable.com/appRRT8E5ESzpazC6/pagjrUOLdvrxjaab7">P3 - Carine</a>
-            <a class="card" href="https://airtable.com/appG018V5zlKYaXZT/pagjrUOLdvrxjaab7?HaH8B=b%3AWzAsWyI5eDZtcCIsNixbInNlbElPcWJLWGxNMFhEWk0wIl0sIk94UW03Il1d">P3 - Maxime</a>
-            <a class="card" href="https://airtable.com/appuabZKKvUBK2KPt/pagjrUOLdvrxjaab7">P4 - Vanessa</a>
-            <a class="card" href="https://airtable.com/appm0S3vxZ0zz4f0D/pagjrUOLdvrxjaab7">P4 - Laetitia</a>
-        </div>
-    </section>
-
-    <section>
-        <h2>📊 Résultats</h2>
-        <div class="grid-2">
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/1gwT26Az-SanoCpncdNn3HFEycrNRUwX4">P3 - Carine</a>
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/18KAwnUlxTgkU6mSgB0PMTWN734sbWkI3">P3 - Maxime</a>
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/1vP-CstuUl8ZgEU9-K6J4Z4AVtVFya5ml">P4 - Vanessa</a>
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/1M8yrIabhQ7k6mxC2dzjPk1GssawSdDU3">P4 - Laetitia</a>
-        </div>
-    </section>
-
-    <section>
-        <h2>📝 Commentaires des bulletins</h2>
-        <div class="grid-2">
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/1cEWsRuT_Sdq5OGhGDb8WCxx-SjEX__1f">P3 - Carine</a>
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/17au_F7Uf29lDmkAdAjb9QT0ZOn9mE4U1">P3 - Maxime</a>
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/1bBdcU1OeqmeDcy7AdLwS571Omw987Ty9">P4 - Vanessa</a>
-            <a class="card" href="https://drive.google.com/drive/u/1/folders/1C9JNmY5y9MCXDNsegn4OllEkO508yHws">P4 - Laetitia</a>
-        </div>
-    </section>
-
-    <section>
-        <h2>📁 Documents</h2>
-        <div class="grid">
-            <a class="card" target="_blank"
-               href="https://drive.google.com/drive/folders/1oeyzHDuosKzSJb4nDD5C3-bxAVMLF3EM">
-                📁 Google Drive
-            </a>
-        </div>
-    </section>
-
-    <section>
-
-    <h2>📝 Formulaires PDF</h2>
-
-    <div class="grid-2">
-
-        <a class="card" onclick="openPDFEditor('excursion')">
-            🚌 Formulaire excursion
-        </a>
-
-        <a class="card" onclick="openPDFEditor('remboursement')">
-            💶 Formulaire remboursement
-        </a>
-
-    </div>
-
-    </section>
-
-    <section>
-        <h2>📁 Dossiers Teams</h2>
-        <div class="grid-2">
-            <a class="card" href="#">📂 P3 - Carine</a>
-            <a class="card" href="#">📂 P3 - Maxime</a>
-            <a class="card" href="#">📂 P4 - Vanessa</a>
-            <a class="card" href="#">📂 P4 - Laetitia</a>
-        </div>
-    </section>
-
- <section class="calendar-section">
-
-    <h2>📅 Calendrier commun</h2>
-
-    <div class="calendar-layout">
-
-        <!-- 📅 CALENDRIER (MOIS) -->
-        <div class="calendar">
-
-            <div class="calendar-header">
-                <button onclick="changeMonth(-1)">⬅</button>
-                <h3 id="month-title">Mois</h3>
-                <button onclick="changeMonth(1)">➡</button>
-            </div>
-
-            <div class="calendar-weekdays">
-                <div>Lun</div>
-                <div>Mar</div>
-                <div>Mer</div>
-                <div>Jeu</div>
-                <div>Ven</div>
-                <div>Sam</div>
-                <div>Dim</div>
-            </div>
-
-<div class="calendar-grid" id="calendar-grid"></div>
-
-        </div>
-
-        <!-- 📌 PANNEAU JOUR -->
-        <div class="day-panel" id="day-events">
-
-            <h3>📅 Jour sélectionné</h3>
-            <p>Clique sur un jour</p>
-
-        </div>
-
+    <div class="alert">
+        📢 Bienvenue sur l’espace collaboratif P3 / P4
     </div>
 
 </section>
 
-</main>
-
-<!-- 📄 PDF EDITOR -->
-
-<div id="pdf-editor" class="pdf-editor">
-
-    <div class="pdf-box">
-
-        <h2 id="pdf-title"></h2>
-
-        <div class="pdf-wrapper">
-
-            <div id="form-container"></div>
-
-        </div>
-
-        <div class="pdf-buttons">
-
-        <button id="admin-btn"
-        onclick="toggleFormEditor()"
-        style="display:none;">
-        ⚙ Modifier le document
-        </button>
 
 
-        <button onclick="downloadPDF()">
-        ⬇️ Télécharger le PDF
-        </button>
+<section class="dashboard">
 
 
-        <button onclick="closePDFEditor()">
-        ❌ Fermer
-        </button>
+    <div class="dash-card urgent">
 
-        <button onclick="saveFields()">
-        💾 Sauvegarder modèle
-        </button>
+        <h3>⭐ Urgences</h3>
 
-        </div>
+        <p>Aucune urgence aujourd’hui</p>
 
     </div>
 
+
+
+    <div class="dash-card info">
+
+        <h3>📢 Informations</h3>
+
+        <p>Réunion mardi 16h</p>
+
+    </div>
+
+
+
+    <div class="dash-card calendar">
+
+        <h3>📅 Calendrier</h3>
+
+        <p>Voir ci-dessous</p>
+
+    </div>
+
+
+</section>
+
+
+
+
+<section>
+
+<h2>📚 Compétences</h2>
+
+<div class="grid-2">
+
+<a class="card" href="https://airtable.com/appRRT8E5ESzpazC6/pagjrUOLdvrxjaab7">
+P3 - Carine
+</a>
+
+<a class="card" href="https://airtable.com/appG018V5zlKYaXZT/pagjrUOLdvrxjaab7?HaH8B=b%3AWzAsWyI5eDZtcCIsNixbInNlbElPcWJLWGxNMFhEWk0wIl0sIk94UW03Il1d">
+P3 - Maxime
+</a>
+
+<a class="card" href="https://airtable.com/appuabZKKvUBK2KPt/pagjrUOLdvrxjaab7">
+P4 - Vanessa
+</a>
+
+<a class="card" href="https://airtable.com/appm0S3vxZ0zz4f0D/pagjrUOLdvrxjaab7">
+P4 - Laetitia
+</a>
+
 </div>
 
+</section>
+
+
+
+
+
+<section>
+
+<h2>📊 Résultats</h2>
+
+<div class="grid-2">
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/1gwT26Az-SanoCpncdNn3HFEycrNRUwX4">
+P3 - Carine
+</a>
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/18KAwnUlxTgkU6mSgB0PMTWN734sbWkI3">
+P3 - Maxime
+</a>
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/1vP-CstuUl8ZgEU9-K6J4Z4AVtVFya5ml">
+P4 - Vanessa
+</a>
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/1M8yrIabhQ7k6mxC2dzjPk1GssawSdDU3">
+P4 - Laetitia
+</a>
+
+</div>
+
+</section>
+
+
+
+
+
+<section>
+
+<h2>📝 Commentaires des bulletins</h2>
+
+
+<div class="grid-2">
+
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/1cEWsRuT_Sdq5OGhGDb8WCxx-SjEX__1f">
+P3 - Carine
+</a>
+
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/17au_F7Uf29lDmkAdAjb9QT0ZOn9mE4U1">
+P3 - Maxime
+</a>
+
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/1bBdcU1OeqmeDcy7AdLwS571Omw987Ty9">
+P4 - Vanessa
+</a>
+
+
+<a class="card" href="https://drive.google.com/drive/u/1/folders/1C9JNmY5y9MCXDNsegn4OllEkO508yHws">
+P4 - Laetitia
+</a>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+<section>
+
+<h2>📁 Documents</h2>
+
+
+<div class="grid">
+
+
+<a class="card"
+   target="_blank"
+   href="https://drive.google.com/drive/folders/1oeyzHDuosKzSJb4nDD5C3-bxAVMLF3EM">
+
+📁 Google Drive
+
+</a>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+<section>
+
+<h2>📁 Dossiers Teams</h2>
+
+
+<div class="grid-2">
+
+
+<a class="card" href="#">
+📂 P3 - Carine
+</a>
+
+
+<a class="card" href="#">
+📂 P3 - Maxime
+</a>
+
+
+<a class="card" href="#">
+📂 P4 - Vanessa
+</a>
+
+
+<a class="card" href="#">
+📂 P4 - Laetitia
+</a>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+<section class="calendar-section">
+
+
+<h2>📅 Calendrier commun</h2>
+
+
+
+<div class="calendar-layout">
+
+
+<div class="calendar">
+
+
+<div class="calendar-header">
+
+<button onclick="changeMonth(-1)">
+⬅
+</button>
+
+
+<h3 id="month-title">
+Mois
+</h3>
+
+
+<button onclick="changeMonth(1)">
+➡
+</button>
+
+
+</div>
+
+
+
+
+<div class="calendar-weekdays">
+
+<div>Lun</div>
+<div>Mar</div>
+<div>Mer</div>
+<div>Jeu</div>
+<div>Ven</div>
+<div>Sam</div>
+<div>Dim</div>
+
+</div>
+
+
+
+
+<div class="calendar-grid" id="calendar-grid"></div>
+
+
+
+</div>
+
+
+
+
+
+<div class="day-panel" id="day-events">
+
+
+<h3>
+📅 Jour sélectionné
+</h3>
+
+
+<p>
+Clique sur un jour
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+</section>
+
+
+</main>
+
+
+
+
+
 <footer>
-    <p>Collaboration P3 / P4</p>
+
+<p>
+Collaboration P3 / P4
+</p>
+
 </footer>
 
+
 </body>
+
 </html>
