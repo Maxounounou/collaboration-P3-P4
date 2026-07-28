@@ -533,3 +533,17 @@ footer {
     outline:2px solid var(--primary-dark);
 
 }
+
+#field-layer {
+    position:absolute;
+    top:0;
+    left:0;
+    pointer-events:auto;
+}
+
+.pdf-input {
+    font-size:14px;
+    border:1px dashed #999;
+    background:transparent;
+    color:red;
+}

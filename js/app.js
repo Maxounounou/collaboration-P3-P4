@@ -1,4 +1,6 @@
 const CORRECT_PIN = "4841";
+const ADMIN_PIN = "2206";
+let isAdmin = false;
 
 // 🔑 AIRTABLE
 const AIRTABLE_TOKEN = "pat66wglbJCY35pdo.5feecb9e3f5d58623cac64ab730c9c501b5f13996c7b665ed45fe86dcf99e812";
@@ -35,29 +37,58 @@ window.addEventListener("load", () => {
 // =========================
 
 function checkPin() {
+
     const value = document.getElementById("pin").value;
     const box = document.getElementById("lock-box");
 
-    if (value === CORRECT_PIN) {
+    if (value === CORRECT_PIN || value === ADMIN_PIN) {
+
+        if(value === ADMIN_PIN){
+            isAdmin = true;
+        }
+
         sessionStorage.setItem("unlocked", "true");
+
         unlock();
+
         initApp();
+
     } else {
+
         document.getElementById("error").innerText = "❌ Code incorrect";
+
         box.classList.add("shake");
+
         setTimeout(() => box.classList.remove("shake"), 300);
+
     }
+
 }
 
 function unlock() {
+
     const lock = document.getElementById("lock-screen");
 
     lock.style.opacity = "0";
 
     setTimeout(() => {
+
         lock.style.display = "none";
+
+        if(isAdmin){
+
+            const btn = document.getElementById("admin-btn");
+
+            if(btn){
+                btn.style.display = "inline-block";
+            }
+
+        }
+
         document.body.classList.remove("locked");
+
     }, 250);
+
 }
 
 // =========================
@@ -566,6 +597,47 @@ async function loadFormFields(type){
 
 
     console.log("Champs chargés :", formFields);
+    createFields();
+
+}
+
+function createFields(){
+
+    const layer = document.getElementById("field-layer");
+
+    layer.innerHTML="";
+
+
+    formFields.forEach(field=>{
+
+
+        const input = document.createElement("input");
+
+
+        input.className="pdf-input";
+
+        input.placeholder = field.label;
+
+
+        input.style.position="absolute";
+
+        input.style.left = field.x+"px";
+
+        input.style.top = field.y+"px";
+
+        input.style.width = field.width+"px";
+
+        input.style.height = field.height+"px";
+
+
+        // écriture rouge
+        input.style.color="red";
+
+
+        layer.appendChild(input);
+
+
+    });
 
 }
 
