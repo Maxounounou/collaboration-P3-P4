@@ -505,15 +505,11 @@ function closePDFEditor(){
 
 }
 
-
-
-
 async function downloadPDF(){
 
-
-    const existingPdfBytes =
+    const existingPdfBytes = 
     await fetch(currentPDF)
-    .then(res=>res.arrayBuffer());
+    .then(res => res.arrayBuffer());
 
 
     const pdfDoc =
@@ -524,23 +520,34 @@ async function downloadPDF(){
     pdfDoc.getPages()[0];
 
 
-    const texte =
-    document.querySelector("#classe")?.value || "";
+    const fields =
+    document.querySelectorAll(".pdf-field");
 
 
-    page.drawText(
-        texte,
-        {
-            x:120,
-            y:650,
-            size:14,
-            color: PDFLib.rgb(1,0,0)
+    fields.forEach(field => {
+
+        const texte = field.innerText.trim();
+
+
+        if(texte !== ""){
+
+            page.drawText(
+                texte,
+                {
+                    x: field.offsetLeft / 1.5,
+                    y: page.getHeight() - (field.offsetTop / 1.5),
+                    size: 12,
+                    color: PDFLib.rgb(1,0,0)
+                }
+            );
+
         }
-    );
+
+    });
+
 
     const pdfBytes =
     await pdfDoc.save();
-
 
 
     const blob =
@@ -550,7 +557,6 @@ async function downloadPDF(){
             type:"application/pdf"
         }
     );
-
 
 
     const link =
@@ -566,40 +572,6 @@ async function downloadPDF(){
 
 
     link.click();
-
-}
-
-// =========================
-// 📄 FORMULAIRES PDF
-// =========================
-
-async function loadFormFields(type){
-
-    console.log("Chargement modèle :", type);
-
-    let url = "";
-
-    if(type === "excursion"){
-        url = "documents/excursion/fields.json";
-    }
-
-
-    if(type === "remboursement"){
-        url = "documents/remboursement/fields.json";
-    }
-
-
-    const response = await fetch(url);
-
-
-    const data = await response.json();
-
-
-    formFields = data.fields || [];
-
-
-    console.log("Champs chargés :", formFields);
-    createFields();
 
 }
 
