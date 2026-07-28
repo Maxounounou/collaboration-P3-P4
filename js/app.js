@@ -388,7 +388,7 @@ let formFields = [];
 let editMode = false;
 
 
-async function openPDFEditor(type){
+function openPDFEditor(type){
 
 
     currentFormType = type;
@@ -428,8 +428,8 @@ async function openPDFEditor(type){
 }
 
 
-await loadFormFields(type);
-await loadPDF(currentPDF);
+    loadFormFields(type);
+    loadPDF(currentPDF);
 
 }
 
