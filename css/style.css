@@ -578,3 +578,79 @@ footer {
     padding:3px;
 
 }
+
+#form-container {
+
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:20px;
+
+}
+
+
+#form-container label {
+
+    font-weight:bold;
+    color:#444;
+    margin-top:8px;
+
+}
+
+
+.form-input {
+
+    width:100%;
+    padding:10px;
+
+    border-radius:10px;
+    border:1px solid #ddd;
+
+    font-size:15px;
+
+    box-sizing:border-box;
+
+}
+
+
+.form-input:focus {
+
+    outline:none;
+    border-color:#ff9800;
+
+}
+
+
+#form-container textarea {
+
+    min-height:80px;
+    resize:vertical;
+
+}
+
+.pdf-box {
+
+    background:white;
+    border-radius:20px;
+
+    padding:25px;
+
+    width:90%;
+    max-width:600px;
+
+    max-height:90vh;
+
+    overflow:auto;
+
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+
+}
+
+
+#pdf-title {
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
