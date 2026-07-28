@@ -424,8 +424,9 @@ function openPDFEditor(type){
     }
 
 
-    loadFormFields(type);
-    loadPDF(currentPDF);
+    if(type==="excursion"){
+        createExcursionForm();
+    }
 
 }
 
@@ -524,11 +525,12 @@ async function downloadPDF(){
 
 
     page.drawText(
-    document.querySelectorAll(".pdf-input")[0].value,
+    texte,
     {
     x:120,
     y:650,
-    size:14
+    size:14,
+    color: PDFLib.rgb(1,0,0)
     }
 );
 
@@ -595,6 +597,64 @@ async function loadFormFields(type){
     console.log("Champs chargés :", formFields);
     createFields();
 
+}
+
+function createExcursionForm(){
+
+    const box = document.getElementById("form-container");
+
+    box.innerHTML = `
+
+    <label>Classe concernée</label>
+    <input class="form-input" id="classe">
+
+
+    <label>Date de la sortie</label>
+    <input class="form-input" type="date" id="date">
+
+
+    <label>Lieu de départ</label>
+    <input class="form-input" id="depart">
+
+
+    <label>Lieu de destination</label>
+    <input class="form-input" id="destination">
+
+
+    <label>Frais de participation (€)</label>
+    <input class="form-input" id="frais">
+
+
+    <label>Moyen de locomotion</label>
+    <select class="form-input" id="transport">
+
+        <option>Covoiturage</option>
+        <option>Bus</option>
+        <option>Car</option>
+        <option>Train</option>
+        <option>Avion ✈️</option>
+        <option>Bateau 🚢</option>
+        <option>A pied 🚶</option>
+
+    </select>
+
+
+    <label>Heure de départ</label>
+    <input class="form-input" type="time" id="heureDepart">
+
+
+    <label>Heure de retour</label>
+    <input class="form-input" type="time" id="heureRetour">
+
+
+    <label>Nombre de personnes à véhiculer</label>
+    <input class="form-input" id="personnes">
+
+
+    <label>Équipements à prévoir</label>
+    <textarea class="form-input" id="equipements"></textarea>
+
+    `;
 }
 
 function createFields(){
