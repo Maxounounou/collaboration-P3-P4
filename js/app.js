@@ -123,6 +123,25 @@ const monthNames = [
     "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
 ];
 
+function getEventIcon(category){
+
+    if(!category) return "📅";
+
+    if(category.includes("Réunion")){
+        return "👥";
+    }
+
+    if(category.includes("Excursion")){
+        return "🚌";
+    }
+
+    if(category.includes("Divers")){
+        return "📌";
+    }
+
+    return "📅";
+}
+
 function renderCalendar() {
     const grid = document.getElementById("calendar-grid");
     const title = document.getElementById("month-title");
@@ -171,7 +190,7 @@ function renderCalendar() {
         cell.innerHTML = `
             <div class="day-number">${day}</div>
             <div class="dots">
-                ${dayEvents.length > 0 ? "●" : ""}
+                ${dayEvents.map(e => getEventIcon(e.category)).join(" ")}
             </div>
         `;
 
@@ -209,8 +228,15 @@ function selectDay(day) {
         dayEvents.forEach(e => {
             html += `
                 <div class="event">
-                    <strong>${e.time || ""}</strong> ${e.title}
-                    <br><small>${e.category || ""}</small>
+                    <strong>
+                    ${getEventIcon(e.category)}
+                    ${e.time || ""}
+                    </strong>
+                    ${e.title}
+
+                    <br>
+
+                    <small>${e.category || ""}</small>
                 </div>
             `;
         });
