@@ -428,9 +428,8 @@ function openPDFEditor(type){
 }
 
 
-loadFormFields(type);
-
-loadPDF(currentPDF);
+await loadFormFields(type);
+await loadPDF(currentPDF);
 
 }
 
@@ -442,6 +441,7 @@ async function loadPDF(url){
     document.getElementById("pdf-container");
 
     container.innerHTML="";
+    document.getElementById("field-layer").innerHTML="";
 
     const pdf =
     await pdfjsLib.getDocument(url).promise;
