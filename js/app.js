@@ -516,21 +516,27 @@ async function downloadPDF(){
     .then(res=>res.arrayBuffer());
 
 
-
     const pdfDoc =
     await PDFLib.PDFDocument.load(existingPdfBytes);
 
-    const texte = document.querySelector("#classe").value || "";
+
+    const page =
+    pdfDoc.getPages()[0];
+
+
+    const texte =
+    document.querySelector("#classe")?.value || "";
+
 
     page.drawText(
-    texte,
-    {
-        x:120,
-        y:650,
-        size:14,
-        color: PDFLib.rgb(1,0,0)
-    }
-);
+        texte,
+        {
+            x:120,
+            y:650,
+            size:14,
+            color: PDFLib.rgb(1,0,0)
+        }
+    );
 
     const pdfBytes =
     await pdfDoc.save();
