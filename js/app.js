@@ -345,7 +345,8 @@ function renderLinks() {
         "Competences": document.getElementById("liens-competences"),
         "Resultats": document.getElementById("liens-resultats"),
         "Bulletins": document.getElementById("liens-bulletins"),
-        "Documents": document.getElementById("liens-documents")
+        "Documents": document.getElementById("liens-documents"),
+        "Teams": document.getElementById("liens-teams")
     };
 
     Object.values(containers).forEach(c => {
