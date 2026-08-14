@@ -9,10 +9,12 @@ const BASE_ID = "apphUnk8iYi34QlzQ";
 const TABLE_EVENTS = "Calendrier";
 const TABLE_URGENT = "Urgence";
 const TABLE_INFO = "Informations";
+const TABLE_LINKS = "Liens";
 
 let events = [];
 let urgences = [];
 let infos = [];
+let liens = [];
 
 let selectedDateGlobal = null;
 let currentDate = new Date();
@@ -107,11 +109,13 @@ async function loadAll() {
     await Promise.all([
         loadEvents(),
         loadUrgences(),
-        loadInfos()
+        loadInfos(),
+        loadLinks()
     ]);
 
     renderCalendar();
     renderDashboard();
+    renderLinks();
 }
 
 // =========================
@@ -312,6 +316,62 @@ async function loadInfos() {
         message: r.fields.Message,   // ⭐ AJOUT IMPORTANT
         visible: r.fields.Visible
     }));
+}
+
+async function loadLinks() {
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_LINKS}`, {
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+    });
+
+    const data = await res.json();
+
+    liens = (data.records || [])
+        .map(r => ({
+            titre: r.fields.Titre,
+            url: r.fields.URL,
+            categorie: r.fields.Categorie,
+            icone: r.fields.Icone,
+            ordre: r.fields.Ordre || 0
+        }))
+        .sort((a, b) => a.ordre - b.ordre);
+}
+
+// =========================
+// 🔗 RENDER LIENS
+// =========================
+
+function renderLinks() {
+    const containers = {
+        "Competences": document.getElementById("liens-competences"),
+        "Resultats": document.getElementById("liens-resultats"),
+        "Bulletins": document.getElementById("liens-bulletins"),
+        "Documents": document.getElementById("liens-documents")
+    };
+
+    Object.values(containers).forEach(c => {
+        if (c) c.innerHTML = "";
+    });
+
+    Object.keys(containers).forEach(cat => {
+        const container = containers[cat];
+        if (!container) return;
+
+        const items = liens.filter(l => l.categorie === cat);
+
+        if (items.length === 0) {
+            container.innerHTML = `<p>Aucun lien</p>`;
+            return;
+        }
+
+        items.forEach(l => {
+            const a = document.createElement("a");
+            a.className = "card";
+            a.href = l.url || "#";
+            a.target = "_blank";
+            a.innerHTML = `${l.icone || "🔗"} ${l.titre}`;
+            container.appendChild(a);
+        });
+    });
 }
 
 // =========================
