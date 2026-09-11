@@ -12,6 +12,35 @@ const TABLE_INFO = "Informations";
 const TABLE_LINKS = "Liens";
 const TABLE_POSTITS = "PostIts";
 
+// =========================
+// 🎨 COULEURS PAR PROF
+// =========================
+
+const TEACHER_COLORS = {
+    "Maxime": "#AEE1F9",
+    "Carine": "#FFD8B1",
+    "Vanessa": "#E0BBE4",
+    "Laetitia": "#B5EAD7"
+};
+
+function getTeacherColor(name) {
+    return TEACHER_COLORS[name] || "#dddddd";
+}
+
+function renderLegend() {
+    const legend = document.getElementById("teacher-legend");
+    if (!legend) return;
+
+    legend.innerHTML = Object.entries(TEACHER_COLORS)
+        .map(([name, color]) => `
+            <span class="legend-item">
+                <span class="legend-dot" style="background:${color}"></span>
+                ${name}
+            </span>
+        `)
+        .join("");
+}
+
 let events = [];
 let urgences = [];
 let infos = [];
@@ -120,6 +149,7 @@ async function loadAll() {
     renderDashboard();
     renderLinks();
     renderPostits();
+    renderLegend();
 }
 
 // =========================
@@ -198,7 +228,12 @@ function renderCalendar() {
         cell.innerHTML = `
             <div class="day-number">${day}</div>
             <div class="dots">
-                ${dayEvents.map(e => getEventIcon(e.category)).join(" ")}
+                ${dayEvents.map(e => `
+                    <span class="event-dot"
+                          style="background:${getTeacherColor(e.auteur)}"
+                          title="${e.title || ""} — ${e.auteur || "Auteur inconnu"}">
+                    </span>
+                `).join("")}
             </div>
         `;
 
@@ -235,7 +270,7 @@ function selectDay(day) {
     } else {
         dayEvents.forEach(e => {
             html += `
-                <div class="event">
+                <div class="event" style="border-left: 6px solid ${getTeacherColor(e.auteur)};">
                     <strong>
                     ${getEventIcon(e.category)}
                     ${e.time || ""}
@@ -244,7 +279,7 @@ function selectDay(day) {
 
                     <br>
 
-                    <small>${e.category || ""}</small>
+                    <small>${e.category || ""}${e.auteur ? " · " + e.auteur : ""}</small>
                 </div>
             `;
         });
@@ -270,7 +305,6 @@ function renderDashboard() {
         ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
         : "Aucune urgence";
 
-    // ⭐ AJOUT MESSAGE + TITRE
     infoBox.innerHTML = visibleInfos.length
         ? visibleInfos.map(i => `• ${i.title}<br><small>${i.message || ""}</small>`).join("<br><br>")
         : "Aucune information";
@@ -291,7 +325,8 @@ async function loadEvents() {
         title: r.fields.Titre,
         date: r.fields.Date,
         time: r.fields.Heure,
-        category: r.fields.Catégorie
+        category: r.fields.Catégorie,
+        auteur: r.fields.Auteur
     }));
 }
 
@@ -335,7 +370,8 @@ async function loadLinks() {
             url: r.fields.URL,
             categorie: r.fields.Categorie,
             icone: r.fields.Icone,
-            ordre: r.fields.Ordre || 0
+            ordre: r.fields.Ordre || 0,
+            auteur: r.fields.Auteur
         }))
         .sort((a, b) => a.ordre - b.ordre);
 }
@@ -374,6 +410,9 @@ function renderLinks() {
             a.className = "card";
             a.href = l.url || "#";
             a.target = "_blank";
+            if (l.auteur) {
+                a.style.background = getTeacherColor(l.auteur);
+            }
             a.innerHTML = `${l.icone || "🔗"} ${l.titre}`;
             container.appendChild(a);
         });
@@ -383,8 +422,6 @@ function renderLinks() {
 // =========================
 // 🗒️ POST-IT
 // =========================
-
-const POSTIT_COLORS = ["yellow", "pink", "blue", "green"];
 
 async function loadPostits() {
     const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}`, {
@@ -396,8 +433,7 @@ async function loadPostits() {
     postits = (data.records || []).map(r => ({
         id: r.id,
         message: r.fields.Message,
-        auteur: r.fields.Auteur,
-        couleur: r.fields.Couleur
+        auteur: r.fields.Auteur
     }));
 }
 
@@ -412,11 +448,10 @@ function renderPostits() {
         return;
     }
 
-    postits.forEach((p, i) => {
-        const color = p.couleur || POSTIT_COLORS[i % POSTIT_COLORS.length];
-
+    postits.forEach(p => {
         const note = document.createElement("div");
-        note.className = `postit postit-${color}`;
+        note.className = "postit";
+        note.style.background = getTeacherColor(p.auteur);
 
         note.innerHTML = `
             <span class="postit-delete" onclick="deletePostit('${p.id}')">✕</span>

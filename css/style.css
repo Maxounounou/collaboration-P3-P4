@@ -659,6 +659,17 @@ footer {
 🗒️ POST-IT
 ========================= */
 
+.postit-section {
+    background: rgba(244, 162, 97, 0.1);
+    border: 2px dashed var(--primary);
+    border-radius: 14px;
+    padding: 15px 20px 20px 20px;
+}
+
+.postit-section h2 {
+    margin-top: 0;
+}
+
 .postit-section button {
     background: var(--primary);
     color: white;
@@ -739,4 +750,40 @@ footer {
     min-height: 80px;
     resize: vertical;
     font-family: inherit;
+}
+
+/* =========================
+🎨 COULEURS PAR PROF
+========================= */
+
+.event-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 1px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.teacher-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #555;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
