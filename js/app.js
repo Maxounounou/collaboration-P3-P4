@@ -16,35 +16,39 @@ const TABLE_POSTITS = "PostIts";
 // 🎨 COULEURS PAR PROF
 // =========================
 
-// ⚠️ Ces libellés doivent correspondre EXACTEMENT à ce qui est
-// encodé dans la colonne "Auteur" sur Airtable (Calendrier, Liens, PostIts)
-const TEACHER_COLORS = {
-    "Madame Carine": "#FFD8B1",
-    "Monsieur Maxime": "#AEE1F9",
-    "Madame Vanessa": "#E0BBE4",
-    "Madame Laetitia": "#B5EAD7"
-};
+// Détection par PRÉNOM (peu importe le format exact du texte :
+// "Maxime", "Monsieur Maxime", "P3 - Maxime" fonctionnent tous)
+const TEACHERS = [
+    { name: "Carine",   label: "Madame Carine",   color: "#FFD8B1" },
+    { name: "Maxime",   label: "Monsieur Maxime", color: "#AEE1F9" },
+    { name: "Vanessa",  label: "Madame Vanessa",  color: "#E0BBE4" },
+    { name: "Laetitia", label: "Madame Laetitia", color: "#B5EAD7" }
+];
 
-const TEACHER_ORDER = Object.keys(TEACHER_COLORS);
-
-function getTeacherColor(name) {
-    return TEACHER_COLORS[name] || "#dddddd";
+function detectTeacher(text) {
+    if (!text) return null;
+    return TEACHERS.find(t => text.includes(t.name)) || null;
 }
 
-function getTeacherRank(name) {
-    const i = TEACHER_ORDER.indexOf(name);
-    return i === -1 ? 999 : i;
+function getTeacherColor(text) {
+    const t = detectTeacher(text);
+    return t ? t.color : "#dddddd";
+}
+
+function getTeacherRank(text) {
+    const t = detectTeacher(text);
+    return t ? TEACHERS.indexOf(t) : 999;
 }
 
 function renderLegend() {
     const legend = document.getElementById("teacher-legend");
     if (!legend) return;
 
-    legend.innerHTML = TEACHER_ORDER
-        .map(name => `
+    legend.innerHTML = TEACHERS
+        .map(t => `
             <span class="legend-item">
-                <span class="legend-dot" style="background:${TEACHER_COLORS[name]}"></span>
-                ${name}
+                <span class="legend-dot" style="background:${t.color}"></span>
+                ${t.label}
             </span>
         `)
         .join("");
@@ -393,7 +397,9 @@ async function loadLinks() {
             auteur: r.fields.Auteur
         }))
         .sort((a, b) => {
-            const rankDiff = getTeacherRank(a.auteur) - getTeacherRank(b.auteur);
+            const textA = `${a.auteur || ""} ${a.titre || ""}`;
+            const textB = `${b.auteur || ""} ${b.titre || ""}`;
+            const rankDiff = getTeacherRank(textA) - getTeacherRank(textB);
             if (rankDiff !== 0) return rankDiff;
             return a.ordre - b.ordre;
         });
@@ -433,9 +439,7 @@ function renderLinks() {
             a.className = "card";
             a.href = l.url || "#";
             a.target = "_blank";
-            if (l.auteur) {
-                a.style.background = getTeacherColor(l.auteur);
-            }
+            a.style.background = getTeacherColor(`${l.auteur || ""} ${l.titre || ""}`);
             a.innerHTML = `${l.icone || "🔗"} ${l.titre}`;
             container.appendChild(a);
         });
