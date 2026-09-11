@@ -10,11 +10,13 @@ const TABLE_EVENTS = "Calendrier";
 const TABLE_URGENT = "Urgence";
 const TABLE_INFO = "Informations";
 const TABLE_LINKS = "Liens";
+const TABLE_POSTITS = "PostIts";
 
 let events = [];
 let urgences = [];
 let infos = [];
 let liens = [];
+let postits = [];
 
 let selectedDateGlobal = null;
 let currentDate = new Date();
@@ -110,12 +112,14 @@ async function loadAll() {
         loadEvents(),
         loadUrgences(),
         loadInfos(),
-        loadLinks()
+        loadLinks(),
+        loadPostits()
     ]);
 
     renderCalendar();
     renderDashboard();
     renderLinks();
+    renderPostits();
 }
 
 // =========================
@@ -346,7 +350,8 @@ function renderLinks() {
         "Resultats": document.getElementById("liens-resultats"),
         "Bulletins": document.getElementById("liens-bulletins"),
         "Documents": document.getElementById("liens-documents"),
-        "Teams": document.getElementById("liens-teams")
+        "Teams": document.getElementById("liens-teams"),
+        "PV": document.getElementById("liens-pv")
     };
 
     Object.values(containers).forEach(c => {
@@ -373,6 +378,125 @@ function renderLinks() {
             container.appendChild(a);
         });
     });
+}
+
+// =========================
+// 🗒️ POST-IT
+// =========================
+
+const POSTIT_COLORS = ["yellow", "pink", "blue", "green"];
+
+async function loadPostits() {
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}`, {
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+    });
+
+    const data = await res.json();
+
+    postits = (data.records || []).map(r => ({
+        id: r.id,
+        message: r.fields.Message,
+        auteur: r.fields.Auteur,
+        couleur: r.fields.Couleur
+    }));
+}
+
+function renderPostits() {
+    const board = document.getElementById("postit-board");
+    if (!board) return;
+
+    board.innerHTML = "";
+
+    if (postits.length === 0) {
+        board.innerHTML = `<p>Aucun post-it pour le moment</p>`;
+        return;
+    }
+
+    postits.forEach((p, i) => {
+        const color = p.couleur || POSTIT_COLORS[i % POSTIT_COLORS.length];
+
+        const note = document.createElement("div");
+        note.className = `postit postit-${color}`;
+
+        note.innerHTML = `
+            <span class="postit-delete" onclick="deletePostit('${p.id}')">✕</span>
+            <p class="postit-message">${p.message || ""}</p>
+            <p class="postit-auteur">— ${p.auteur || "Anonyme"}</p>
+        `;
+
+        board.appendChild(note);
+    });
+}
+
+function openPostitModal() {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+        <div class="modal-box">
+            <h3>🗒️ Nouveau post-it</h3>
+
+            <textarea id="postit-message" placeholder="Ton petit mot..."></textarea>
+
+            <select id="postit-auteur">
+                <option>Maxime</option>
+                <option>Carine</option>
+                <option>Vanessa</option>
+                <option>Laetitia</option>
+            </select>
+
+            <button onclick="savePostit()">Enregistrer</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
+
+async function savePostit() {
+    const message = document.getElementById("postit-message").value.trim();
+    const auteur = document.getElementById("postit-auteur").value;
+
+    if (!message) return;
+
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            fields: {
+                Message: message,
+                Auteur: auteur
+            }
+        })
+    });
+
+    const data = await res.json();
+
+    if (!data.error) {
+        document.querySelector(".modal").remove();
+        await loadPostits();
+        renderPostits();
+    } else {
+        console.error("❌ AIRTABLE ERROR :", data.error);
+    }
+}
+
+async function deletePostit(id) {
+    if (!confirm("Supprimer ce post-it ?")) return;
+
+    await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+    });
+
+    await loadPostits();
+    renderPostits();
 }
 
 // =========================
@@ -459,6 +583,9 @@ async function saveEvent() {
 
 window.saveEvent = saveEvent;
 window.openModal = openModal;
+window.openPostitModal = openPostitModal;
+window.savePostit = savePostit;
+window.deletePostit = deletePostit;
 
 window.changeMonth = (step) => {
     currentDate.setMonth(currentDate.getMonth() + step);
