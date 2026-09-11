@@ -16,25 +16,34 @@ const TABLE_POSTITS = "PostIts";
 // 🎨 COULEURS PAR PROF
 // =========================
 
+// ⚠️ Ces libellés doivent correspondre EXACTEMENT à ce qui est
+// encodé dans la colonne "Auteur" sur Airtable (Calendrier, Liens, PostIts)
 const TEACHER_COLORS = {
-    "Maxime": "#AEE1F9",
-    "Carine": "#FFD8B1",
-    "Vanessa": "#E0BBE4",
-    "Laetitia": "#B5EAD7"
+    "Madame Carine": "#FFD8B1",
+    "Monsieur Maxime": "#AEE1F9",
+    "Madame Vanessa": "#E0BBE4",
+    "Madame Laetitia": "#B5EAD7"
 };
+
+const TEACHER_ORDER = Object.keys(TEACHER_COLORS);
 
 function getTeacherColor(name) {
     return TEACHER_COLORS[name] || "#dddddd";
+}
+
+function getTeacherRank(name) {
+    const i = TEACHER_ORDER.indexOf(name);
+    return i === -1 ? 999 : i;
 }
 
 function renderLegend() {
     const legend = document.getElementById("teacher-legend");
     if (!legend) return;
 
-    legend.innerHTML = Object.entries(TEACHER_COLORS)
-        .map(([name, color]) => `
+    legend.innerHTML = TEACHER_ORDER
+        .map(name => `
             <span class="legend-item">
-                <span class="legend-dot" style="background:${color}"></span>
+                <span class="legend-dot" style="background:${TEACHER_COLORS[name]}"></span>
                 ${name}
             </span>
         `)
@@ -225,15 +234,25 @@ function renderCalendar() {
             cell.classList.add("today");
         }
 
+        // 🎨 Couleur de la case selon le(s) prof(s) de la journée
+        if (dayEvents.length > 0) {
+            const colors = [...new Set(dayEvents.map(e => getTeacherColor(e.auteur)))];
+
+            if (colors.length === 1) {
+                cell.style.background = colors[0];
+            } else {
+                const step = 100 / colors.length;
+                const stops = colors
+                    .map((c, i) => `${c} ${i * step}%, ${c} ${(i + 1) * step}%`)
+                    .join(", ");
+                cell.style.background = `linear-gradient(135deg, ${stops})`;
+            }
+        }
+
         cell.innerHTML = `
             <div class="day-number">${day}</div>
             <div class="dots">
-                ${dayEvents.map(e => `
-                    <span class="event-dot"
-                          style="background:${getTeacherColor(e.auteur)}"
-                          title="${e.title || ""} — ${e.auteur || "Auteur inconnu"}">
-                    </span>
-                `).join("")}
+                ${dayEvents.map(e => getEventIcon(e.category)).join(" ")}
             </div>
         `;
 
@@ -373,7 +392,11 @@ async function loadLinks() {
             ordre: r.fields.Ordre || 0,
             auteur: r.fields.Auteur
         }))
-        .sort((a, b) => a.ordre - b.ordre);
+        .sort((a, b) => {
+            const rankDiff = getTeacherRank(a.auteur) - getTeacherRank(b.auteur);
+            if (rankDiff !== 0) return rankDiff;
+            return a.ordre - b.ordre;
+        });
 }
 
 // =========================
@@ -474,10 +497,10 @@ function openPostitModal() {
             <textarea id="postit-message" placeholder="Ton petit mot..."></textarea>
 
             <select id="postit-auteur">
-                <option>Maxime</option>
-                <option>Carine</option>
-                <option>Vanessa</option>
-                <option>Laetitia</option>
+                <option>Madame Carine</option>
+                <option>Monsieur Maxime</option>
+                <option>Madame Vanessa</option>
+                <option>Madame Laetitia</option>
             </select>
 
             <button onclick="savePostit()">Enregistrer</button>
@@ -557,10 +580,10 @@ function openModal() {
             </select>
 
             <select id="ev-author">
-                <option>Maxime</option>
-                <option>Carine</option>
-                <option>Vanessa</option>
-                <option>Laetitia</option>
+                <option>Madame Carine</option>
+                <option>Monsieur Maxime</option>
+                <option>Madame Vanessa</option>
+                <option>Madame Laetitia</option>
             </select>
 
             <button onclick="saveEvent()">Enregistrer</button>
