@@ -11,6 +11,17 @@ const TABLE_URGENT = "Urgence";
 const TABLE_INFO = "Informations";
 const TABLE_LINKS = "Liens";
 const TABLE_POSTITS = "PostIts";
+const TABLE_REPONSES = "Reponses";
+
+// Protège l'affichage : les textes tapés par les collègues sont insérés dans la page
+function escapeHtml(str) {
+    return String(str == null ? "" : str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
 
 // =========================
 // 🎨 COULEURS PAR PROF
@@ -59,6 +70,7 @@ let urgences = [];
 let infos = [];
 let liens = [];
 let postits = [];
+let reponses = [];
 
 let selectedDateGlobal = null;
 let currentDate = new Date();
@@ -155,7 +167,8 @@ async function loadAll() {
         loadUrgences(),
         loadInfos(),
         loadLinks(),
-        loadPostits()
+        loadPostits(),
+        loadReponses()
     ]);
 
     renderCalendar();
@@ -328,6 +341,7 @@ function renderDashboard() {
         ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
         : "Aucune urgence";
 
+    // ⭐ AJOUT MESSAGE + TITRE
     infoBox.innerHTML = visibleInfos.length
         ? visibleInfos.map(i => `• ${i.title}<br><small>${i.message || ""}</small>`).join("<br><br>")
         : "Aucune information";
@@ -480,14 +494,128 @@ function renderPostits() {
         note.className = "postit";
         note.style.background = getTeacherColor(p.auteur);
 
+        const replies = reponses
+            .filter(r => r.postitId === p.id)
+            .map(r => `
+                <div class="reply" style="border-left-color: ${getTeacherColor(r.auteur)};">
+                    <span class="reply-delete" onclick="deleteReponse('${r.id}')">✕</span>
+                    <p class="reply-message">${escapeHtml(r.message)}</p>
+                    <p class="reply-auteur">${escapeHtml(r.auteur || "Anonyme")}</p>
+                </div>
+            `)
+            .join("");
+
         note.innerHTML = `
             <span class="postit-delete" onclick="deletePostit('${p.id}')">✕</span>
-            <p class="postit-message">${p.message || ""}</p>
-            <p class="postit-auteur">— ${p.auteur || "Anonyme"}</p>
+            <p class="postit-message">${escapeHtml(p.message)}</p>
+            <p class="postit-auteur">— ${escapeHtml(p.auteur || "Anonyme")}</p>
+            ${replies ? `<div class="postit-replies">${replies}</div>` : ""}
+            <button class="reply-btn" onclick="openReplyModal('${p.id}')">💬 Répondre</button>
         `;
 
         board.appendChild(note);
     });
+}
+
+// =========================
+// 💬 RÉPONSES AUX POST-IT
+// =========================
+
+async function loadReponses() {
+    try {
+        const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}`, {
+            headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+        });
+
+        const data = await res.json();
+
+        reponses = (data.records || [])
+            .map(r => ({
+                id: r.id,
+                postitId: r.fields.PostItId,
+                message: r.fields.Message,
+                auteur: r.fields.Auteur,
+                created: r.createdTime
+            }))
+            .sort((a, b) => new Date(a.created) - new Date(b.created));
+    } catch (err) {
+        // Si la table n'existe pas encore, le reste du site continue de fonctionner
+        console.error("❌ Réponses non chargées :", err);
+        reponses = [];
+    }
+}
+
+function openReplyModal(postitId) {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+        <div class="modal-box">
+            <h3>💬 Ta réponse</h3>
+
+            <textarea id="reply-message" placeholder="Ta réponse..."></textarea>
+
+            <select id="reply-auteur">
+                <option>Madame Carine</option>
+                <option>Monsieur Maxime</option>
+                <option>Madame Vanessa</option>
+                <option>Madame Laetitia</option>
+            </select>
+
+            <button onclick="saveReponse('${postitId}')">Envoyer</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
+
+async function saveReponse(postitId) {
+    const message = document.getElementById("reply-message").value.trim();
+    const auteur = document.getElementById("reply-auteur").value;
+
+    if (!message) return;
+
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            fields: {
+                PostItId: postitId,
+                Message: message,
+                Auteur: auteur
+            }
+        })
+    });
+
+    const data = await res.json();
+
+    if (!data.error) {
+        document.querySelector(".modal").remove();
+        await loadReponses();
+        renderPostits();
+    } else {
+        console.error("❌ AIRTABLE ERROR :", data.error);
+        alert("La réponse n'a pas pu être enregistrée. Vérifie que la table « Reponses » existe dans Airtable.");
+    }
+}
+
+async function deleteReponse(id) {
+    if (!confirm("Supprimer cette réponse ?")) return;
+
+    await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+    });
+
+    await loadReponses();
+    renderPostits();
 }
 
 function openPostitModal() {
@@ -550,14 +678,24 @@ async function savePostit() {
 }
 
 async function deletePostit(id) {
-    if (!confirm("Supprimer ce post-it ?")) return;
+    if (!confirm("Supprimer ce post-it (et ses réponses) ?")) return;
 
     await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
     });
 
+    // Supprime aussi les réponses rattachées à ce post-it
+    const orphans = reponses.filter(r => r.postitId === id);
+    await Promise.all(orphans.map(r =>
+        fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}/${r.id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+        })
+    ));
+
     await loadPostits();
+    await loadReponses();
     renderPostits();
 }
 
@@ -648,6 +786,9 @@ window.openModal = openModal;
 window.openPostitModal = openPostitModal;
 window.savePostit = savePostit;
 window.deletePostit = deletePostit;
+window.openReplyModal = openReplyModal;
+window.saveReponse = saveReponse;
+window.deleteReponse = deleteReponse;
 
 window.changeMonth = (step) => {
     currentDate.setMonth(currentDate.getMonth() + step);
