@@ -13,6 +13,95 @@ const TABLE_LINKS = "Liens";
 const TABLE_POSTITS = "PostIts";
 const TABLE_REPONSES = "Reponses";
 
+// =========================
+// 🧊 CACHE — économise les appels Airtable
+// (plan gratuit : 1000 appels par mois pour tout le workspace)
+// =========================
+
+const MINUTE = 60 * 1000;
+
+// Durée pendant laquelle une copie gardée dans le navigateur reste valable
+const CACHE_TTL = {
+    [TABLE_LINKS]:    6 * 60 * MINUTE,   // change rarement
+    [TABLE_INFO]:     60 * MINUTE,
+    [TABLE_URGENT]:   60 * MINUTE,
+    [TABLE_EVENTS]:   30 * MINUTE,
+    [TABLE_POSTITS]:  15 * MINUTE,
+    [TABLE_REPONSES]: 15 * MINUTE
+};
+
+function readCache(table) {
+    try {
+        const raw = localStorage.getItem("airtable_cache_" + table);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeCache(table, records, time) {
+    try {
+        localStorage.setItem(
+            "airtable_cache_" + table,
+            JSON.stringify({ time: time || Date.now(), records })
+        );
+    } catch (e) {}
+}
+
+// Sans argument : vide le cache de toutes les tables
+function clearCache(table) {
+    try {
+        const tables = table ? [table] : Object.keys(CACHE_TTL);
+        tables.forEach(t => localStorage.removeItem("airtable_cache_" + t));
+    } catch (e) {}
+}
+
+// Renvoie les enregistrements d'une table : depuis le cache s'il est récent,
+// sinon depuis Airtable. Si Airtable refuse (quota atteint, panne...), on garde
+// la dernière copie connue au lieu d'afficher une page vide, et on attend
+// 5 minutes avant de réessayer.
+async function fetchTable(table) {
+    const cached = readCache(table);
+
+    if (cached && Date.now() - cached.time < CACHE_TTL[table]) {
+        return cached.records;
+    }
+
+    try {
+        let records = [];
+        let offset = "";
+
+        do {
+            const url = `https://api.airtable.com/v0/${BASE_ID}/${table}`
+                + (offset ? `?offset=${encodeURIComponent(offset)}` : "");
+
+            const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+            });
+
+            const data = await res.json();
+
+            if (data.error) throw new Error(JSON.stringify(data.error));
+
+            records = records.concat(data.records || []);
+            offset = data.offset || "";
+        } while (offset);
+
+        writeCache(table, records);
+        return records;
+
+    } catch (err) {
+        console.error(`❌ Airtable (${table}) :`, err);
+
+        if (cached) {
+            writeCache(table, cached.records, Date.now() - CACHE_TTL[table] + 5 * MINUTE);
+            return cached.records;
+        }
+
+        return [];
+    }
+}
+
 // Protège l'affichage : les textes tapés par les collègues sont insérés dans la page
 function escapeHtml(str) {
     return String(str == null ? "" : str)
@@ -154,7 +243,35 @@ function unlock() {
 // =========================
 
 async function initApp() {
+    addRefreshButton();
     await loadAll();
+}
+
+let lastRefresh = 0;
+
+// Force un rechargement complet depuis Airtable (6 appels)
+async function refreshAll() {
+    if (Date.now() - lastRefresh < 30000) return;   // 1 clic / 30 s maximum
+    lastRefresh = Date.now();
+    clearCache();
+    await loadAll();
+}
+
+function addRefreshButton() {
+    if (document.getElementById("refresh-btn")) return;
+
+    const hero = document.querySelector(".hero");
+    if (!hero) return;
+
+    const btn = document.createElement("button");
+    btn.id = "refresh-btn";
+    btn.textContent = "↻ Actualiser";
+    btn.style.cssText = "margin-top:14px;padding:6px 14px;border:1px solid rgba(0,0,0,.1);"
+        + "border-radius:999px;background:rgba(255,255,255,.7);color:#6e6e73;"
+        + "font:inherit;font-size:13px;cursor:pointer;";
+    btn.onclick = refreshAll;
+
+    hero.appendChild(btn);
 }
 
 // =========================
@@ -352,13 +469,9 @@ function renderDashboard() {
 // =========================
 
 async function loadEvents() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
+    const records = await fetchTable(TABLE_EVENTS);
 
-    const data = await res.json();
-
-    events = (data.records || []).map(r => ({
+    events = records.map(r => ({
         title: r.fields.Titre,
         date: r.fields.Date,
         time: r.fields.Heure,
@@ -368,26 +481,18 @@ async function loadEvents() {
 }
 
 async function loadUrgences() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_URGENT}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
+    const records = await fetchTable(TABLE_URGENT);
 
-    const data = await res.json();
-
-    urgences = (data.records || []).map(r => ({
+    urgences = records.map(r => ({
         title: r.fields.Titre,
         active: r.fields.Active
     }));
 }
 
 async function loadInfos() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_INFO}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
+    const records = await fetchTable(TABLE_INFO);
 
-    const data = await res.json();
-
-    infos = (data.records || []).map(r => ({
+    infos = records.map(r => ({
         title: r.fields.Titre,
         message: r.fields.Message,   // ⭐ AJOUT IMPORTANT
         visible: r.fields.Visible
@@ -395,13 +500,9 @@ async function loadInfos() {
 }
 
 async function loadLinks() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_LINKS}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
+    const records = await fetchTable(TABLE_LINKS);
 
-    const data = await res.json();
-
-    liens = (data.records || [])
+    liens = records
         .map(r => ({
             titre: r.fields.Titre,
             url: r.fields.URL,
@@ -465,13 +566,9 @@ function renderLinks() {
 // =========================
 
 async function loadPostits() {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}`, {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
+    const records = await fetchTable(TABLE_POSTITS);
 
-    const data = await res.json();
-
-    postits = (data.records || []).map(r => ({
+    postits = records.map(r => ({
         id: r.id,
         message: r.fields.Message,
         auteur: r.fields.Auteur
@@ -522,27 +619,17 @@ function renderPostits() {
 // =========================
 
 async function loadReponses() {
-    try {
-        const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}`, {
-            headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-        });
+    const records = await fetchTable(TABLE_REPONSES);
 
-        const data = await res.json();
-
-        reponses = (data.records || [])
-            .map(r => ({
-                id: r.id,
-                postitId: r.fields.PostItId,
-                message: r.fields.Message,
-                auteur: r.fields.Auteur,
-                created: r.createdTime
-            }))
-            .sort((a, b) => new Date(a.created) - new Date(b.created));
-    } catch (err) {
-        // Si la table n'existe pas encore, le reste du site continue de fonctionner
-        console.error("❌ Réponses non chargées :", err);
-        reponses = [];
-    }
+    reponses = records
+        .map(r => ({
+            id: r.id,
+            postitId: r.fields.PostItId,
+            message: r.fields.Message,
+            auteur: r.fields.Auteur,
+            created: r.createdTime
+        }))
+        .sort((a, b) => new Date(a.created) - new Date(b.created));
 }
 
 function openReplyModal(postitId) {
@@ -598,6 +685,7 @@ async function saveReponse(postitId) {
 
     if (!data.error) {
         document.querySelector(".modal").remove();
+        clearCache(TABLE_REPONSES);
         await loadReponses();
         renderPostits();
     } else {
@@ -614,6 +702,7 @@ async function deleteReponse(id) {
         headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
     });
 
+    clearCache(TABLE_REPONSES);
     await loadReponses();
     renderPostits();
 }
@@ -670,6 +759,7 @@ async function savePostit() {
 
     if (!data.error) {
         document.querySelector(".modal").remove();
+        clearCache(TABLE_POSTITS);
         await loadPostits();
         renderPostits();
     } else {
@@ -694,6 +784,8 @@ async function deletePostit(id) {
         })
     ));
 
+    clearCache(TABLE_POSTITS);
+    clearCache(TABLE_REPONSES);
     await loadPostits();
     await loadReponses();
     renderPostits();
@@ -770,7 +862,9 @@ async function saveEvent() {
 
     if (!data.error) {
         document.querySelector(".modal").remove();
-        await loadAll();
+        clearCache(TABLE_EVENTS);
+        await loadEvents();
+        renderCalendar();
         selectDay(parseInt(selectedDateGlobal.split("-")[2]));
     } else {
         console.error("❌ AIRTABLE ERROR :", data.error);
@@ -790,9 +884,11 @@ window.openReplyModal = openReplyModal;
 window.saveReponse = saveReponse;
 window.deleteReponse = deleteReponse;
 
+// Changer de mois ne demande aucune donnée de plus : on réaffiche simplement
 window.changeMonth = (step) => {
+    currentDate.setDate(1);
     currentDate.setMonth(currentDate.getMonth() + step);
-    loadAll();
+    renderCalendar();
 };
 
 window.checkPin = checkPin;
