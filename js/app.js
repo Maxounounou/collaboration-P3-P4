@@ -6,12 +6,9 @@ let isAdmin = false;
 const AIRTABLE_TOKEN = "pat66wglbJCY35pdo.5feecb9e3f5d58623cac64ab730c9c501b5f13996c7b665ed45fe86dcf99e812";
 const BASE_ID = "apphUnk8iYi34QlzQ";
 
-const TABLE_EVENTS = "Calendrier";
-const TABLE_URGENT = "Urgence";
-const TABLE_INFO = "Informations";
-const TABLE_LINKS = "Liens";
-const TABLE_POSTITS = "PostIts";
-const TABLE_REPONSES = "Reponses";
+// Une SEULE table pour tout le site. La colonne "Type" dit de quoi il s'agit :
+// Lien, Evenement, PostIt, Reponse, Urgence, Info
+const TABLE_DATA = "Donnees";
 
 // =========================
 // 🧊 CACHE — économise les appels Airtable
@@ -20,86 +17,40 @@ const TABLE_REPONSES = "Reponses";
 
 const MINUTE = 60 * 1000;
 
-// Durée pendant laquelle une copie gardée dans le navigateur reste valable
-const CACHE_TTL = {
-    [TABLE_LINKS]:    6 * 60 * MINUTE,   // change rarement
-    [TABLE_INFO]:     60 * MINUTE,
-    [TABLE_URGENT]:   60 * MINUTE,
-    [TABLE_EVENTS]:   30 * MINUTE,
-    [TABLE_POSTITS]:  15 * MINUTE,
-    [TABLE_REPONSES]: 15 * MINUTE
-};
+// Durée pendant laquelle la copie gardée dans le navigateur reste valable
+const CACHE_TTL = 10 * MINUTE;
+const CACHE_KEY = "airtable_cache_" + TABLE_DATA;
 
-function readCache(table) {
+function readCache() {
     try {
-        const raw = localStorage.getItem("airtable_cache_" + table);
+        const raw = localStorage.getItem(CACHE_KEY);
         return raw ? JSON.parse(raw) : null;
     } catch (e) {
         return null;
     }
 }
 
-function writeCache(table, records, time) {
+function writeCache(records, time) {
     try {
         localStorage.setItem(
-            "airtable_cache_" + table,
+            CACHE_KEY,
             JSON.stringify({ time: time || Date.now(), records })
         );
     } catch (e) {}
 }
 
-// Sans argument : vide le cache de toutes les tables
-function clearCache(table) {
+function clearCache() {
     try {
-        const tables = table ? [table] : Object.keys(CACHE_TTL);
-        tables.forEach(t => localStorage.removeItem("airtable_cache_" + t));
+        localStorage.removeItem(CACHE_KEY);
     } catch (e) {}
 }
 
-// Renvoie les enregistrements d'une table : depuis le cache s'il est récent,
-// sinon depuis Airtable. Si Airtable refuse (quota atteint, panne...), on garde
-// la dernière copie connue au lieu d'afficher une page vide, et on attend
-// 5 minutes avant de réessayer.
-async function fetchTable(table) {
-    const cached = readCache(table);
-
-    if (cached && Date.now() - cached.time < CACHE_TTL[table]) {
-        return cached.records;
-    }
-
+// Ménage : supprime les anciennes copies de l'époque où il y avait 6 tables
+function removeLegacyCache() {
     try {
-        let records = [];
-        let offset = "";
-
-        do {
-            const url = `https://api.airtable.com/v0/${BASE_ID}/${table}`
-                + (offset ? `?offset=${encodeURIComponent(offset)}` : "");
-
-            const res = await fetch(url, {
-                headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-            });
-
-            const data = await res.json();
-
-            if (data.error) throw new Error(JSON.stringify(data.error));
-
-            records = records.concat(data.records || []);
-            offset = data.offset || "";
-        } while (offset);
-
-        writeCache(table, records);
-        return records;
-
-    } catch (err) {
-        console.error(`❌ Airtable (${table}) :`, err);
-
-        if (cached) {
-            writeCache(table, cached.records, Date.now() - CACHE_TTL[table] + 5 * MINUTE);
-            return cached.records;
-        }
-
-        return [];
-    }
+        ["Calendrier", "Urgence", "Informations", "Liens", "PostIts", "Reponses"]
+            .forEach(t => localStorage.removeItem("airtable_cache_" + t));
+    } catch (e) {}
 }
 
 // Protège l'affichage : les textes tapés par les collègues sont insérés dans la page
@@ -153,6 +104,10 @@ function renderLegend() {
         `)
         .join("");
 }
+
+// Lignes brutes de la table + les listes qu'on en déduit
+let dataRecords = [];
+let dataTime = 0;     // 0 = aucune lecture réussie pour l'instant
 
 let events = [];
 let urgences = [];
@@ -243,13 +198,14 @@ function unlock() {
 // =========================
 
 async function initApp() {
+    removeLegacyCache();
     addRefreshButton();
     await loadAll();
 }
 
 let lastRefresh = 0;
 
-// Force un rechargement complet depuis Airtable (6 appels)
+// Force un rechargement depuis Airtable (1 appel)
 async function refreshAll() {
     if (Date.now() - lastRefresh < 30000) return;   // 1 clic / 30 s maximum
     lastRefresh = Date.now();
@@ -279,20 +235,184 @@ function addRefreshButton() {
 // =========================
 
 async function loadAll() {
-    await Promise.all([
-        loadEvents(),
-        loadUrgences(),
-        loadInfos(),
-        loadLinks(),
-        loadPostits(),
-        loadReponses()
-    ]);
+    await loadData();
+    parseData();
 
     renderCalendar();
     renderDashboard();
     renderLinks();
     renderPostits();
     renderLegend();
+}
+
+// =========================
+// 🔌 AIRTABLE — LECTURE (1 appel, 2 si plus de 100 lignes)
+// =========================
+
+// Lit la table : depuis la copie du navigateur si elle est récente, sinon depuis
+// Airtable. Si Airtable refuse (quota atteint, panne...), on garde la dernière
+// copie connue au lieu d'afficher une page vide, et on attend 5 minutes avant
+// de réessayer.
+async function loadData() {
+    const cached = readCache();
+
+    if (cached && Date.now() - cached.time < CACHE_TTL) {
+        dataRecords = cached.records;
+        dataTime = cached.time;
+        return;
+    }
+
+    try {
+        let records = [];
+        let offset = "";
+
+        do {
+            const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_DATA}`
+                + (offset ? `?offset=${encodeURIComponent(offset)}` : "");
+
+            const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+            });
+
+            const data = await res.json();
+
+            if (data.error) throw new Error(JSON.stringify(data.error));
+
+            records = records.concat(data.records || []);
+            offset = data.offset || "";
+        } while (offset);
+
+        dataRecords = records;
+        dataTime = Date.now();
+        writeCache(dataRecords, dataTime);
+
+    } catch (err) {
+        console.error("❌ Airtable :", err);
+
+        if (cached) {
+            dataRecords = cached.records;
+            dataTime = Date.now() - CACHE_TTL + 5 * MINUTE;
+            writeCache(dataRecords, dataTime);
+        } else {
+            dataRecords = [];
+            dataTime = 0;
+        }
+    }
+}
+
+// Range les lignes de la table dans les bonnes listes, selon la colonne "Type"
+function parseData() {
+    const ofType = type => dataRecords.filter(r => r.fields.Type === type);
+
+    events = ofType("Evenement").map(r => ({
+        title: r.fields.Titre,
+        date: r.fields.Date,
+        time: r.fields.Heure,
+        category: r.fields.Categorie || r.fields["Catégorie"],
+        auteur: r.fields.Auteur
+    }));
+
+    urgences = ofType("Urgence").map(r => ({
+        title: r.fields.Titre,
+        active: r.fields.Actif
+    }));
+
+    infos = ofType("Info").map(r => ({
+        title: r.fields.Titre,
+        message: r.fields.Message,
+        visible: r.fields.Actif
+    }));
+
+    liens = ofType("Lien")
+        .map(r => ({
+            titre: r.fields.Titre,
+            url: r.fields.URL,
+            categorie: r.fields.Categorie,
+            icone: r.fields.Icone,
+            ordre: r.fields.Ordre || 0,
+            auteur: r.fields.Auteur
+        }))
+        .sort((a, b) => {
+            const textA = `${a.auteur || ""} ${a.titre || ""}`;
+            const textB = `${b.auteur || ""} ${b.titre || ""}`;
+            const rankDiff = getTeacherRank(textA) - getTeacherRank(textB);
+            if (rankDiff !== 0) return rankDiff;
+            return a.ordre - b.ordre;
+        });
+
+    postits = ofType("PostIt").map(r => ({
+        id: r.id,
+        message: r.fields.Message,
+        auteur: r.fields.Auteur
+    }));
+
+    reponses = ofType("Reponse")
+        .map(r => ({
+            id: r.id,
+            postitId: r.fields.ParentId,
+            message: r.fields.Message,
+            auteur: r.fields.Auteur,
+            created: r.createdTime
+        }))
+        .sort((a, b) => new Date(a.created) - new Date(b.created));
+}
+
+// =========================
+// ✏️ AIRTABLE — ÉCRITURE
+// (la copie locale est mise à jour directement : aucune relecture nécessaire)
+// =========================
+
+async function createRecord(fields) {
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_DATA}`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ fields })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+        console.error("❌ AIRTABLE ERROR :", data.error);
+        return null;
+    }
+
+    dataRecords.push(data);
+    if (dataTime) writeCache(dataRecords, dataTime);
+    parseData();
+
+    return data;
+}
+
+// Airtable accepte jusqu'à 10 suppressions par appel
+async function deleteRecords(ids) {
+    for (let i = 0; i < ids.length; i += 10) {
+        const query = ids
+            .slice(i, i + 10)
+            .map(id => `records[]=${encodeURIComponent(id)}`)
+            .join("&");
+
+        const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_DATA}?${query}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            console.error("❌ AIRTABLE ERROR :", data.error);
+            return false;
+        }
+    }
+
+    const gone = new Set(ids);
+    dataRecords = dataRecords.filter(r => !gone.has(r.id));
+    if (dataTime) writeCache(dataRecords, dataTime);
+    parseData();
+
+    return true;
 }
 
 // =========================
@@ -426,13 +546,13 @@ function selectDay(day) {
                 <div class="event" style="border-left: 6px solid ${getTeacherColor(e.auteur)};">
                     <strong>
                     ${getEventIcon(e.category)}
-                    ${e.time || ""}
+                    ${escapeHtml(e.time)}
                     </strong>
-                    ${e.title}
+                    ${escapeHtml(e.title)}
 
                     <br>
 
-                    <small>${e.category || ""}${e.auteur ? " · " + e.auteur : ""}</small>
+                    <small>${escapeHtml(e.category)}${e.auteur ? " · " + escapeHtml(e.auteur) : ""}</small>
                 </div>
             `;
         });
@@ -455,69 +575,12 @@ function renderDashboard() {
     const visibleInfos = infos.filter(i => i.visible);
 
     urgentBox.innerHTML = activeUrgent.length
-        ? activeUrgent.map(u => `• ${u.title}`).join("<br>")
+        ? activeUrgent.map(u => `• ${escapeHtml(u.title)}`).join("<br>")
         : "Aucune urgence";
 
-    // ⭐ AJOUT MESSAGE + TITRE
     infoBox.innerHTML = visibleInfos.length
-        ? visibleInfos.map(i => `• ${i.title}<br><small>${i.message || ""}</small>`).join("<br><br>")
+        ? visibleInfos.map(i => `• ${escapeHtml(i.title)}<br><small>${escapeHtml(i.message)}</small>`).join("<br><br>")
         : "Aucune information";
-}
-
-// =========================
-// 🔌 AIRTABLE LOAD
-// =========================
-
-async function loadEvents() {
-    const records = await fetchTable(TABLE_EVENTS);
-
-    events = records.map(r => ({
-        title: r.fields.Titre,
-        date: r.fields.Date,
-        time: r.fields.Heure,
-        category: r.fields.Catégorie,
-        auteur: r.fields.Auteur
-    }));
-}
-
-async function loadUrgences() {
-    const records = await fetchTable(TABLE_URGENT);
-
-    urgences = records.map(r => ({
-        title: r.fields.Titre,
-        active: r.fields.Active
-    }));
-}
-
-async function loadInfos() {
-    const records = await fetchTable(TABLE_INFO);
-
-    infos = records.map(r => ({
-        title: r.fields.Titre,
-        message: r.fields.Message,   // ⭐ AJOUT IMPORTANT
-        visible: r.fields.Visible
-    }));
-}
-
-async function loadLinks() {
-    const records = await fetchTable(TABLE_LINKS);
-
-    liens = records
-        .map(r => ({
-            titre: r.fields.Titre,
-            url: r.fields.URL,
-            categorie: r.fields.Categorie,
-            icone: r.fields.Icone,
-            ordre: r.fields.Ordre || 0,
-            auteur: r.fields.Auteur
-        }))
-        .sort((a, b) => {
-            const textA = `${a.auteur || ""} ${a.titre || ""}`;
-            const textB = `${b.auteur || ""} ${b.titre || ""}`;
-            const rankDiff = getTeacherRank(textA) - getTeacherRank(textB);
-            if (rankDiff !== 0) return rankDiff;
-            return a.ordre - b.ordre;
-        });
 }
 
 // =========================
@@ -555,7 +618,7 @@ function renderLinks() {
             a.href = l.url || "#";
             a.target = "_blank";
             a.style.background = getTeacherColor(`${l.auteur || ""} ${l.titre || ""}`);
-            a.innerHTML = `${l.icone || "🔗"} ${l.titre}`;
+            a.innerHTML = `${escapeHtml(l.icone || "🔗")} ${escapeHtml(l.titre)}`;
             container.appendChild(a);
         });
     });
@@ -564,16 +627,6 @@ function renderLinks() {
 // =========================
 // 🗒️ POST-IT
 // =========================
-
-async function loadPostits() {
-    const records = await fetchTable(TABLE_POSTITS);
-
-    postits = records.map(r => ({
-        id: r.id,
-        message: r.fields.Message,
-        auteur: r.fields.Auteur
-    }));
-}
 
 function renderPostits() {
     const board = document.getElementById("postit-board");
@@ -614,23 +667,68 @@ function renderPostits() {
     });
 }
 
+function openPostitModal() {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+        <div class="modal-box">
+            <h3>🗒️ Nouveau post-it</h3>
+
+            <textarea id="postit-message" placeholder="Ton petit mot..."></textarea>
+
+            <select id="postit-auteur">
+                <option>Madame Carine</option>
+                <option>Monsieur Maxime</option>
+                <option>Madame Vanessa</option>
+                <option>Madame Laetitia</option>
+            </select>
+
+            <button onclick="savePostit()">Enregistrer</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
+
+async function savePostit() {
+    const message = document.getElementById("postit-message").value.trim();
+    const auteur = document.getElementById("postit-auteur").value;
+
+    if (!message) return;
+
+    const record = await createRecord({
+        Type: "PostIt",
+        Message: message,
+        Auteur: auteur
+    });
+
+    if (record) {
+        document.querySelector(".modal").remove();
+        renderPostits();
+    } else {
+        alert("Le post-it n'a pas pu être enregistré. Vérifie la table « Donnees » dans Airtable (colonnes Type, Message, Auteur).");
+    }
+}
+
+async function deletePostit(id) {
+    if (!confirm("Supprimer ce post-it (et ses réponses) ?")) return;
+
+    // Le post-it et toutes ses réponses partent en un seul appel
+    const ids = [id, ...reponses.filter(r => r.postitId === id).map(r => r.id)];
+
+    if (await deleteRecords(ids)) {
+        renderPostits();
+    }
+}
+
 // =========================
 // 💬 RÉPONSES AUX POST-IT
 // =========================
-
-async function loadReponses() {
-    const records = await fetchTable(TABLE_REPONSES);
-
-    reponses = records
-        .map(r => ({
-            id: r.id,
-            postitId: r.fields.PostItId,
-            message: r.fields.Message,
-            auteur: r.fields.Auteur,
-            created: r.createdTime
-        }))
-        .sort((a, b) => new Date(a.created) - new Date(b.created));
-}
 
 function openReplyModal(postitId) {
     const modal = document.createElement("div");
@@ -666,133 +764,31 @@ async function saveReponse(postitId) {
 
     if (!message) return;
 
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            fields: {
-                PostItId: postitId,
-                Message: message,
-                Auteur: auteur
-            }
-        })
+    const record = await createRecord({
+        Type: "Reponse",
+        ParentId: postitId,
+        Message: message,
+        Auteur: auteur
     });
 
-    const data = await res.json();
-
-    if (!data.error) {
+    if (record) {
         document.querySelector(".modal").remove();
-        clearCache(TABLE_REPONSES);
-        await loadReponses();
         renderPostits();
     } else {
-        console.error("❌ AIRTABLE ERROR :", data.error);
-        alert("La réponse n'a pas pu être enregistrée. Vérifie que la table « Reponses » existe dans Airtable.");
+        alert("La réponse n'a pas pu être enregistrée. Vérifie la table « Donnees » dans Airtable (colonnes Type, ParentId, Message, Auteur).");
     }
 }
 
 async function deleteReponse(id) {
     if (!confirm("Supprimer cette réponse ?")) return;
 
-    await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
-
-    clearCache(TABLE_REPONSES);
-    await loadReponses();
-    renderPostits();
-}
-
-function openPostitModal() {
-    const modal = document.createElement("div");
-    modal.classList.add("modal");
-
-    modal.innerHTML = `
-        <div class="modal-box">
-            <h3>🗒️ Nouveau post-it</h3>
-
-            <textarea id="postit-message" placeholder="Ton petit mot..."></textarea>
-
-            <select id="postit-auteur">
-                <option>Madame Carine</option>
-                <option>Monsieur Maxime</option>
-                <option>Madame Vanessa</option>
-                <option>Madame Laetitia</option>
-            </select>
-
-            <button onclick="savePostit()">Enregistrer</button>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    modal.onclick = (e) => {
-        if (e.target === modal) modal.remove();
-    };
-}
-
-async function savePostit() {
-    const message = document.getElementById("postit-message").value.trim();
-    const auteur = document.getElementById("postit-auteur").value;
-
-    if (!message) return;
-
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            fields: {
-                Message: message,
-                Auteur: auteur
-            }
-        })
-    });
-
-    const data = await res.json();
-
-    if (!data.error) {
-        document.querySelector(".modal").remove();
-        clearCache(TABLE_POSTITS);
-        await loadPostits();
+    if (await deleteRecords([id])) {
         renderPostits();
-    } else {
-        console.error("❌ AIRTABLE ERROR :", data.error);
     }
 }
 
-async function deletePostit(id) {
-    if (!confirm("Supprimer ce post-it (et ses réponses) ?")) return;
-
-    await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_POSTITS}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-    });
-
-    // Supprime aussi les réponses rattachées à ce post-it
-    const orphans = reponses.filter(r => r.postitId === id);
-    await Promise.all(orphans.map(r =>
-        fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_REPONSES}/${r.id}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
-        })
-    ));
-
-    clearCache(TABLE_POSTITS);
-    clearCache(TABLE_REPONSES);
-    await loadPostits();
-    await loadReponses();
-    renderPostits();
-}
-
 // =========================
-// ➕ MODAL
+// ➕ MODAL ÉVÉNEMENT
 // =========================
 
 function openModal() {
@@ -841,33 +837,21 @@ async function saveEvent() {
     const category = document.getElementById("ev-category").value;
     const author = document.getElementById("ev-author").value;
 
-    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_EVENTS}`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            fields: {
-                Titre: title,
-                Date: selectedDateGlobal,
-                Heure: time,
-                Catégorie: category,
-                Auteur: author
-            }
-        })
+    const record = await createRecord({
+        Type: "Evenement",
+        Titre: title,
+        Date: selectedDateGlobal,
+        Heure: time,
+        Categorie: category,
+        Auteur: author
     });
 
-    const data = await res.json();
-
-    if (!data.error) {
+    if (record) {
         document.querySelector(".modal").remove();
-        clearCache(TABLE_EVENTS);
-        await loadEvents();
         renderCalendar();
         selectDay(parseInt(selectedDateGlobal.split("-")[2]));
     } else {
-        console.error("❌ AIRTABLE ERROR :", data.error);
+        alert("L'événement n'a pas pu être enregistré. Vérifie la table « Donnees » dans Airtable (colonnes Type, Titre, Date, Heure, Categorie, Auteur).");
     }
 }
 
